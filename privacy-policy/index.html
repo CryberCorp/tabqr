@@ -7,6 +7,14 @@
   <meta name="description" content="Politique de confidentialité de TabQR, extension Chrome de génération de codes QR.">
   <title>Confidentialité — TabQR</title>
   <style>
+    @font-face {
+      font-family: "Doto";
+      src: url("../assets/fonts/Doto-Black.ttf") format("truetype");
+      font-style: normal;
+      font-weight: 900;
+      font-display: swap;
+    }
+
     :root {
       color-scheme: light;
       font: 16px/1.65 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -44,10 +52,19 @@
     }
 
     .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       margin: 0;
+      font-family: "Doto", sans-serif;
       font-size: 1.4rem;
-      font-weight: 750;
+      font-weight: 900;
       letter-spacing: -0.04em;
+    }
+
+    .brand img {
+      width: 28px;
+      height: 28px;
     }
 
     nav {
@@ -73,9 +90,16 @@
 
     h1 {
       margin: 32px 0 4px;
+      font-family: "Doto", sans-serif;
+      font-weight: 900;
       font-size: clamp(1.8rem, 5vw, 2.35rem);
       line-height: 1.15;
       letter-spacing: -0.04em;
+    }
+
+    h2 {
+      font-family: "Doto", sans-serif;
+      font-weight: 900;
     }
 
     .updated {
@@ -126,7 +150,7 @@
 <body>
   <main>
     <header>
-      <p class="brand">TabQR</p>
+      <p class="brand"><img src="../assets/tabqr-icon.svg" alt="">TabQR</p>
       <nav aria-label="Language">
         <a href="./" lang="fr" aria-current="page">Français</a>
         <a href="en/" lang="en">English</a>
