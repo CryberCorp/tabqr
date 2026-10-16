@@ -8,9 +8,9 @@
   <meta name="theme-color" content="#f4f4f1">
   <title>TabQR — QR Code Generator</title>
   <link rel="icon" href="assets/tabqr-icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="app.css?v=6">
+  <link rel="stylesheet" href="app.css?v=7">
   <script src="assets/scripts/qrcode-generator.js" defer></script>
-  <script src="app.js?v=3" defer></script>
+  <script src="app.js?v=4" defer></script>
 </head>
 <body>
   <div class="site-shell">
@@ -46,6 +46,10 @@
               <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>
               <span data-i18n="copyContent">Copy content</span>
             </button>
+            <button id="clear-content" class="secondary-button" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>
+              <span data-i18n="clearContent">Clear</span>
+            </button>
           </div>
 
           <div class="options">
@@ -69,7 +73,7 @@
           </div>
           <p class="privacy-note">
             <span class="privacy-dot" aria-hidden="true"></span>
-            <span data-i18n="localNote">Generated locally in your browser. Your content is never sent to a server.</span>
+            <span data-i18n="localNote">Generated in your browser, without ever sending your content to a server.</span>
           </p>
         </div>
 

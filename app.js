@@ -10,13 +10,15 @@ const translations = {
     contentPlaceholder: "Paste a link or type any text…",
     pasteContent: "Paste from clipboard",
     copyContent: "Copy content",
+    clearContent: "Clear",
+    cleared: "Content cleared.",
     qrColor: "QR color",
     background: "Background",
     format: "Format",
     yourQr: "Your QR code",
     ready: "LOCAL",
     emptyState: "Enter content to create your QR code.",
-    localNote: "Generated locally in your browser. Your content is never sent to a server.",
+    localNote: "Generated in your browser, without ever sending your content to a server.",
     download: "Download QR code",
     extensionPrivacy: "Extension privacy",
     storeComingSoon: "Coming soon",
@@ -29,6 +31,9 @@ const translations = {
     pasteEmpty: "Your clipboard is empty.",
     pasteError: "Could not read the clipboard. Allow clipboard access and try again.",
     generated: "Your QR code is ready.",
+    generatedUrl: "Website detected: scanning will open this link.",
+    generatedEmail: "Email address detected: scanning will start a new email.",
+    generatedPhone: "Phone number detected: scanning will call this number.",
     inputRequired: "Enter some text or a link to create a QR code.",
     qrError: "This content could not be encoded. Try using less text.",
     downloadSuccess: "QR code downloaded.",
@@ -46,13 +51,15 @@ const translations = {
     contentPlaceholder: "Collez un lien ou saisissez du texte…",
     pasteContent: "Coller depuis le presse-papiers",
     copyContent: "Copier le contenu",
+    clearContent: "Effacer",
+    cleared: "Contenu effacé.",
     qrColor: "Couleur du QR",
     background: "Arrière-plan",
     format: "Format",
     yourQr: "Votre QR code",
     ready: "LOCAL",
     emptyState: "Saisissez du contenu pour créer votre QR code.",
-    localNote: "Généré localement dans votre navigateur. Votre contenu n’est jamais envoyé à un serveur.",
+    localNote: "Généré dans votre navigateur, sans jamais envoyer votre contenu à un serveur.",
     download: "Télécharger le QR code",
     extensionPrivacy: "Confidentialité de l’extension",
     storeComingSoon: "Bientôt",
@@ -65,6 +72,9 @@ const translations = {
     pasteEmpty: "Le presse-papiers est vide.",
     pasteError: "Impossible de lire le presse-papiers. Autorisez son accès puis réessayez.",
     generated: "Votre QR code est prêt.",
+    generatedUrl: "Site web détecté : le scan ouvrira ce lien.",
+    generatedEmail: "Adresse e-mail détectée : le scan ouvrira un nouvel e-mail.",
+    generatedPhone: "Numéro de téléphone détecté : le scan appellera ce numéro.",
     inputRequired: "Saisissez du texte ou un lien pour créer un QR code.",
     qrError: "Ce contenu n’a pas pu être encodé. Essayez avec moins de texte.",
     downloadSuccess: "QR code téléchargé.",
@@ -84,36 +94,213 @@ const formatInput = document.querySelector("#qr-format");
 const downloadButton = document.querySelector("#download-qr");
 const copyButton = document.querySelector("#copy-content");
 const pasteButton = document.querySelector("#paste-content");
+const clearButton = document.querySelector("#clear-content");
 let qrMatrix = null;
+let qrKind = "text";
 let updateTimer = 0;
-let currentLanguage = "en";
+const defaultLanguage = "en";
+const languageKey = "tabqr-language";
+const rtlLanguages = new Set(["ar", "fa", "he", "ur"]);
+const supportedLanguages = Object.keys(translations);
+let currentLanguage = defaultLanguage;
+
+// Missing keys fall back to English, then to the key itself.
+function t(key) {
+  return translations[currentLanguage]?.[key] ?? translations[defaultLanguage][key] ?? key;
+}
+
+// Matches "pt-BR" / "pt_BR" to "pt-BR", then "pt", among supported languages.
+function matchLanguage(code) {
+  if (typeof code !== "string" || !code) {
+    return null;
+  }
+  const normalized = code.replace("_", "-").toLowerCase();
+  const base = normalized.split("-")[0];
+  return supportedLanguages.find((language) => language.toLowerCase() === normalized)
+    ?? supportedLanguages.find((language) => language.toLowerCase() === base)
+    ?? null;
+}
+
+function detectLanguage() {
+  let saved = null;
+  try {
+    saved = window.localStorage.getItem(languageKey);
+  } catch {
+    // Storage unavailable: use the browser languages.
+  }
+  const candidates = [saved, ...(navigator.languages ?? []), navigator.language];
+  for (const candidate of candidates) {
+    const language = matchLanguage(candidate);
+    if (language) {
+      return language;
+    }
+  }
+  return defaultLanguage;
+}
+
+function saveLanguage(language) {
+  try {
+    window.localStorage.setItem(languageKey, language);
+  } catch {
+    // Storage may be unavailable (private mode, blocked site data).
+  }
+}
+
+function buildLanguageSwitch() {
+  const languageSwitch = document.querySelector(".language-switch");
+  languageSwitch.replaceChildren(...supportedLanguages.map((language) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.language = language;
+    button.textContent = language.toUpperCase();
+    try {
+      const displayNames = new Intl.DisplayNames([language], { type: "language" });
+      button.title = displayNames.of(language);
+      button.lang = language;
+    } catch {
+      // Intl.DisplayNames unsupported: keep the code only.
+    }
+    button.addEventListener("click", () => {
+      saveLanguage(language);
+      translatePage(language);
+    });
+    return button;
+  }));
+}
+
+const nonbreakingWordPatterns = {
+  en: /(^|[^\p{L}])(a|an|the|and|or|of|to|in|on|at|by|for|as|you)\s+(?=\p{L})/giu,
+  fr: /(^|[^\p{L}])(a|à|y|de|du|des|le|la|les|un|une|et|ou|en|au|aux|ce|ces)\s+(?=\p{L})/giu,
+};
+
+function keepShortWordsWithNext(text, language) {
+  const pattern = nonbreakingWordPatterns[language];
+  return pattern ? text.replace(pattern, "$1$2\u00a0") : text;
+}
+
+const preferencesKey = "tabqr-preferences";
+const contentKey = "tabqr-content";
+const exampleContents = [
+  "https://example.com",
+  "demo@example.com",
+  "+33 6 12 34 56 78",
+  "Hello from TabQR!",
+];
+const emailPattern = /^[^\s@:]+@[^\s@]+\.[^\s@]+$/;
+const phonePattern = /^[+0(][\d\s().-]+$/;
+const schemePattern = /^[a-z][a-z0-9+.-]*:/i;
+const bareUrlPattern = /^(?:www\.[^\s/]+\.[a-z]{2,}|[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|net|org|fr|be|ch|ca|de|eu|uk|io|co|app|dev|info|me|shop|store|site|online|tech|xyz))(?::\d+)?(?:[/?#]\S*)?$/i;
+
+// Prefixes emails, phone numbers and bare domains so scanners act on them.
+function encodeContent(value) {
+  if (emailPattern.test(value)) {
+    return { data: `mailto:${value}`, kind: "email" };
+  }
+  if (schemePattern.test(value)) {
+    const scheme = value.slice(0, value.indexOf(":")).toLowerCase();
+    const kind = { http: "url", https: "url", mailto: "email", tel: "phone" }[scheme] ?? "text";
+    return { data: value, kind };
+  }
+  const digits = value.replace(/\D/g, "");
+  if (phonePattern.test(value) && digits.length >= 8 && digits.length <= 15) {
+    return { data: `tel:${value.startsWith("+") ? "+" : ""}${digits}`, kind: "phone" };
+  }
+  if (bareUrlPattern.test(value)) {
+    return { data: `https://${value}`, kind: "url" };
+  }
+  return { data: value, kind: "text" };
+}
+
+function loadContent() {
+  let saved = null;
+  try {
+    saved = window.localStorage.getItem(contentKey);
+  } catch {
+    // Storage unavailable: fall back to an example.
+  }
+  contentInput.value = saved ?? exampleContents[Math.floor(Math.random() * exampleContents.length)];
+}
+
+function saveContent() {
+  try {
+    window.localStorage.setItem(contentKey, contentInput.value);
+  } catch {
+    // Storage may be unavailable (private mode, blocked site data).
+  }
+}
+
+function generatedMessage() {
+  return t({
+    url: "generatedUrl",
+    email: "generatedEmail",
+    phone: "generatedPhone",
+  }[qrKind] ?? "generated");
+}
+
+const hexColorPattern = /^#[0-9a-f]{6}$/i;
+
+function loadPreferences() {
+  let preferences;
+  try {
+    preferences = JSON.parse(window.localStorage.getItem(preferencesKey) || "{}");
+  } catch {
+    return;
+  }
+  if (!preferences || typeof preferences !== "object") {
+    return;
+  }
+
+  if (hexColorPattern.test(preferences.color)) {
+    colorInput.value = preferences.color;
+  }
+  if (hexColorPattern.test(preferences.background)) {
+    backgroundInput.value = preferences.background;
+  }
+  if ([...formatInput.options].some((option) => option.value === preferences.format)) {
+    formatInput.value = preferences.format;
+  }
+}
+
+function savePreferences() {
+  try {
+    window.localStorage.setItem(preferencesKey, JSON.stringify({
+      color: colorInput.value,
+      background: backgroundInput.value,
+      format: formatInput.value,
+    }));
+  } catch {
+    // Storage may be unavailable (private mode, blocked site data).
+  }
+}
 
 function translatePage(language) {
-  currentLanguage = language;
-  const messages = translations[language];
-  document.documentElement.lang = language;
-  document.title = messages.title;
-  document.querySelector('meta[name="description"]').content = messages.description;
+  currentLanguage = matchLanguage(language) ?? defaultLanguage;
+  document.documentElement.lang = currentLanguage;
+  document.documentElement.dir = rtlLanguages.has(currentLanguage.split("-")[0]) ? "rtl" : "ltr";
+  document.title = t("title");
+  document.querySelector('meta[name="description"]').content = t("description");
 
   document.querySelectorAll("[data-i18n]").forEach((element) => {
-    element.textContent = messages[element.dataset.i18n];
+    const key = element.dataset.i18n;
+    const text = t(key);
+    element.textContent = key === "intro" ? keepShortWordsWithNext(text, currentLanguage) : text;
   });
   document.querySelectorAll("[data-i18n-placeholder]").forEach((element) => {
-    element.placeholder = messages[element.dataset.i18nPlaceholder];
+    element.placeholder = t(element.dataset.i18nPlaceholder);
   });
   document.querySelectorAll("[data-i18n-aria-label]").forEach((element) => {
-    element.setAttribute("aria-label", messages[element.dataset.i18nAriaLabel]);
+    element.setAttribute("aria-label", t(element.dataset.i18nAriaLabel));
   });
-  previewCanvas.setAttribute("aria-label", messages.qrPreview);
+  previewCanvas.setAttribute("aria-label", t("qrPreview"));
 
   document.querySelectorAll("[data-language]").forEach((button) => {
-    button.setAttribute("aria-pressed", String(button.dataset.language === language));
+    button.setAttribute("aria-pressed", String(button.dataset.language === currentLanguage));
   });
 
   if (qrMatrix) {
-    status.textContent = messages.generated;
+    status.textContent = generatedMessage();
   } else if (!contentInput.value.trim()) {
-    status.textContent = messages.inputRequired;
+    status.textContent = t("inputRequired");
   }
 }
 
@@ -157,31 +344,32 @@ function setError(message) {
 
 function generateQr() {
   const value = contentInput.value.trim();
-  const messages = translations[currentLanguage];
   status.classList.remove("is-error");
 
   if (!value) {
     qrMatrix = null;
     previewCanvas.hidden = true;
     emptyState.hidden = false;
-    status.textContent = messages.inputRequired;
+    status.textContent = t("inputRequired");
     downloadButton.disabled = true;
     return;
   }
 
   try {
+    const encoded = encodeContent(value);
     const code = qrcode(0, "M");
-    code.addData(value);
+    code.addData(encoded.data);
     code.make();
     qrMatrix = code;
+    qrKind = encoded.kind;
     renderPreview();
     previewCanvas.hidden = false;
     emptyState.hidden = true;
-    status.textContent = messages.generated;
+    status.textContent = generatedMessage();
     downloadButton.disabled = false;
   } catch {
     qrMatrix = null;
-    setError(messages.qrError);
+    setError(t("qrError"));
   }
 }
 
@@ -215,21 +403,21 @@ function createSvg(matrix, size, foreground, background) {
 }
 
 contentInput.addEventListener("input", () => {
+  saveContent();
   window.clearTimeout(updateTimer);
   updateTimer = window.setTimeout(generateQr, 120);
 });
 
 colorInput.addEventListener("input", renderPreview);
 backgroundInput.addEventListener("input", renderPreview);
-
-document.querySelectorAll("[data-language]").forEach((button) => {
-  button.addEventListener("click", () => translatePage(button.dataset.language));
-});
+colorInput.addEventListener("change", savePreferences);
+backgroundInput.addEventListener("change", savePreferences);
+formatInput.addEventListener("change", savePreferences);
 
 pasteButton.addEventListener("click", async () => {
   pasteButton.disabled = true;
   status.classList.remove("is-error");
-  status.textContent = translations[currentLanguage].pasteReading;
+  status.textContent = t("pasteReading");
 
   try {
     if (!navigator.clipboard?.readText) {
@@ -238,35 +426,45 @@ pasteButton.addEventListener("click", async () => {
 
     const clipboardText = await navigator.clipboard.readText();
     if (!clipboardText.trim()) {
-      status.textContent = translations[currentLanguage].pasteEmpty;
+      status.textContent = t("pasteEmpty");
       return;
     }
 
     contentInput.value = clipboardText;
+    saveContent();
     generateQr();
-    status.textContent = translations[currentLanguage].pasted;
+    status.textContent = t("pasted");
   } catch (error) {
     const detail = error instanceof Error ? ` ${error.message}` : "";
-    status.textContent = `${translations[currentLanguage].pasteError}${detail}`;
+    status.textContent = `${t("pasteError")}${detail}`;
     status.classList.add("is-error");
   } finally {
     pasteButton.disabled = false;
   }
 });
 
+clearButton.addEventListener("click", () => {
+  window.clearTimeout(updateTimer);
+  contentInput.value = "";
+  saveContent();
+  generateQr();
+  status.textContent = t("cleared");
+  contentInput.focus();
+});
+
 copyButton.addEventListener("click", async () => {
   if (!contentInput.value.trim()) {
-    status.textContent = translations[currentLanguage].inputRequired;
+    status.textContent = t("inputRequired");
     status.classList.remove("is-error");
     return;
   }
 
   try {
     await navigator.clipboard.writeText(contentInput.value);
-    status.textContent = translations[currentLanguage].copied;
+    status.textContent = t("copied");
     status.classList.remove("is-error");
   } catch (error) {
-    status.textContent = `${translations[currentLanguage].copyError} ${error instanceof Error ? error.message : ""}`.trim();
+    status.textContent = `${t("copyError")} ${error instanceof Error ? error.message : ""}`.trim();
     status.classList.add("is-error");
   }
 });
@@ -312,9 +510,9 @@ downloadButton.addEventListener("click", async () => {
     anchor.href = objectUrl;
     anchor.download = `tabqr-code.${format}`;
     anchor.click();
-    status.textContent = translations[currentLanguage].downloadSuccess;
+    status.textContent = t("downloadSuccess");
   } catch (error) {
-    status.textContent = `${translations[currentLanguage].downloadError} ${error instanceof Error ? error.message : ""}`.trim();
+    status.textContent = `${t("downloadError")} ${error instanceof Error ? error.message : ""}`.trim();
     status.classList.add("is-error");
   } finally {
     if (objectUrl) {
@@ -324,5 +522,8 @@ downloadButton.addEventListener("click", async () => {
   }
 });
 
-translatePage("en");
+loadPreferences();
+loadContent();
+buildLanguageSwitch();
+translatePage(detectLanguage());
 generateQr();

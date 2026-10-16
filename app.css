@@ -155,6 +155,7 @@ h1 {
   margin: 8px 0 0;
   color: var(--muted);
   font-size: 14px;
+  text-wrap: pretty;
 }
 
 .generator {
@@ -488,28 +489,14 @@ h1 {
   }
 
   .intro {
-    display: grid;
+    display: block;
     width: min(100%, 1120px);
     max-width: 1120px;
-    grid-template-columns: minmax(0, 1.1fr) minmax(240px, 0.9fr);
-    align-items: end;
-    column-gap: clamp(24px, 5vw, 72px);
     margin: 0 auto 16px;
   }
 
-  .intro .eyebrow {
-    grid-column: 1 / -1;
-  }
-
-  .intro h1 {
-    grid-column: 1;
-  }
-
   .intro-copy {
-    grid-column: 2;
-    grid-row: 2;
-    align-self: end;
-    margin: 0 0 4px;
+    margin: 8px 0 0;
   }
 
   .generator {
@@ -548,11 +535,11 @@ h1 {
 
 @media (min-width: 701px) and (max-height: 700px) {
   main {
-    padding: 10px 0;
+    padding: 4px 0;
   }
 
   .intro {
-    margin-bottom: 9px;
+    margin-bottom: 5px;
   }
 
   .intro .eyebrow {
@@ -570,7 +557,7 @@ h1 {
 
   .controls,
   .result {
-    padding: 14px 20px;
+    padding: 10px 20px;
   }
 
   #qr-content {
@@ -594,7 +581,7 @@ h1 {
   }
 
   #qr-preview {
-    width: min(100%, 30vh, 180px);
+    width: min(100%, 25vh, 150px);
   }
 
   .status {
@@ -674,6 +661,10 @@ h1 {
   .input-actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
+  }
+
+  #clear-content {
+    grid-column: 1 / -1;
   }
 
   .secondary-button {
