@@ -22,6 +22,7 @@ const translations = {
     footerNote: "QR codes, made easy.",
     copied: "Content copied.",
     copyError: "Could not copy the content.",
+    pasteReading: "Reading clipboard…",
     pasted: "Content pasted from clipboard.",
     pasteEmpty: "Your clipboard is empty.",
     pasteError: "Could not read the clipboard. Allow clipboard access and try again.",
@@ -55,6 +56,7 @@ const translations = {
     footerNote: "Les QR codes en toute simplicité.",
     copied: "Contenu copié.",
     copyError: "Impossible de copier le contenu.",
+    pasteReading: "Lecture du presse-papiers…",
     pasted: "Contenu collé depuis le presse-papiers.",
     pasteEmpty: "Le presse-papiers est vide.",
     pasteError: "Impossible de lire le presse-papiers. Autorisez son accès puis réessayez.",
@@ -221,7 +223,9 @@ document.querySelectorAll("[data-language]").forEach((button) => {
 });
 
 pasteButton.addEventListener("click", async () => {
+  pasteButton.disabled = true;
   status.classList.remove("is-error");
+  status.textContent = translations[currentLanguage].pasteReading;
 
   try {
     if (!navigator.clipboard?.readText) {
@@ -241,6 +245,8 @@ pasteButton.addEventListener("click", async () => {
     const detail = error instanceof Error ? ` ${error.message}` : "";
     status.textContent = `${translations[currentLanguage].pasteError}${detail}`;
     status.classList.add("is-error");
+  } finally {
+    pasteButton.disabled = false;
   }
 });
 

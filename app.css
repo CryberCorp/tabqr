@@ -344,7 +344,7 @@ h1 {
 
 .qr-card {
   display: grid;
-  min-height: 226px;
+  min-height: 194px;
   place-items: center;
   padding: 12px;
   border: 1px solid var(--ink);
@@ -353,7 +353,7 @@ h1 {
 
 #qr-preview {
   display: block;
-  width: min(100%, 220px);
+  width: min(100%, 188px);
   height: auto;
   image-rendering: pixelated;
 }
