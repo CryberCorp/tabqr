@@ -29,8 +29,9 @@
 body {
   min-width: 320px;
   min-height: 100vh;
+  min-height: 100svh;
   margin: 0;
-  padding: 0 24px;
+  padding: 0 clamp(16px, 3vw, 48px);
 }
 
 button,
@@ -47,8 +48,11 @@ input {
 }
 
 .site-shell {
-  width: min(100%, 1040px);
+  display: flex;
+  width: min(100%, 1440px);
+  flex-direction: column;
   min-height: 100vh;
+  min-height: 100svh;
   margin: 0 auto;
 }
 
@@ -469,6 +473,65 @@ h1 {
   user-select: none;
 }
 
+@media (min-width: 701px) {
+  main {
+    display: flex;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+    padding: clamp(12px, 1.8vh, 22px) 0;
+  }
+
+  .intro {
+    display: grid;
+    max-width: none;
+    grid-template-columns: minmax(0, 1.1fr) minmax(240px, 0.9fr);
+    align-items: end;
+    column-gap: clamp(24px, 5vw, 72px);
+    margin-bottom: clamp(10px, 1.5vh, 18px);
+  }
+
+  .intro .eyebrow {
+    grid-column: 1 / -1;
+  }
+
+  .intro h1 {
+    grid-column: 1;
+  }
+
+  .intro-copy {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: end;
+    margin: 0 0 4px;
+  }
+
+  .generator {
+    min-height: 0;
+    flex: 1 1 auto;
+    grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.92fr);
+  }
+
+  .controls,
+  .result {
+    padding: clamp(18px, 2.1vw, 32px);
+  }
+
+  .result {
+    min-height: 0;
+  }
+
+  .qr-card {
+    min-height: 0;
+    flex: 1 1 auto;
+  }
+
+  #qr-preview {
+    width: min(100%, 48vh, 460px);
+    max-height: 100%;
+  }
+}
+
 @media (max-width: 700px) {
   body {
     padding: 0 16px;
@@ -480,6 +543,10 @@ h1 {
 
   .generator {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .intro {
+    display: block;
   }
 
   .controls {
