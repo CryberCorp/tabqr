@@ -18,7 +18,7 @@
     :root {
       color-scheme: light;
       font: 16px/1.6 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: #171714;
+      color: #111;
       background: #f4f4f1;
       font-synthesis: none;
       text-rendering: optimizeLegibility;
@@ -78,15 +78,20 @@
     a {
       display: inline-block;
       padding: 10px 14px;
-      border: 1px solid #171714;
-      color: #171714;
+      border: 1px solid #111;
+      color: #111;
       text-decoration: none;
     }
 
     a:hover,
     a:focus-visible {
-      background: #171714;
+      background: #111;
       color: #fff;
+    }
+
+    a:focus-visible {
+      outline: 2px solid #111;
+      outline-offset: 2px;
     }
   </style>
 </head>
@@ -99,8 +104,8 @@
     <p lang="en">Create and customize QR codes directly in Chrome.<br>Choose a language to read the privacy policy.</p>
     <p lang="fr">Générez et personnalisez vos codes QR directement dans Chrome.<br>Choisissez votre langue pour consulter la politique de confidentialité.</p>
     <nav aria-label="Privacy policy">
-      <a href="privacy-policy/" lang="en">Privacy Policy — English</a>
-      <a href="privacy-policy/fr/" lang="fr">Politique de confidentialité — Français</a>
+      <a href="https://crybercorp.github.io/tabqr/privacy-policy/" lang="en">Privacy Policy — English</a>
+      <a href="https://crybercorp.github.io/tabqr/privacy-policy/fr/" lang="fr">Politique de confidentialité — Français</a>
     </nav>
   </main>
 </body>
