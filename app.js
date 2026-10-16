@@ -6,7 +6,7 @@ const translations = {
     intro: "Turn a link or any text into a QR code. Customize it and download it in the format you need.",
     contentLabel: "Content",
     contentPlaceholder: "Paste a link or type any text…",
-    usePageUrl: "Use this page’s URL",
+    pasteContent: "Paste from clipboard",
     copyContent: "Copy content",
     qrColor: "QR color",
     background: "Background",
@@ -16,12 +16,15 @@ const translations = {
     emptyState: "Enter content to create your QR code.",
     localNote: "Generated locally in your browser. Your content is never sent to a server.",
     download: "Download QR code",
-    extensionLabel: "CHROME EXTENSION",
-    extensionCopy: "Using the TabQR Chrome extension?",
-    extensionPrivacy: "Read the extension privacy policy",
+    extensionPrivacy: "Extension privacy",
+    storeComingSoon: "Coming soon",
+    storeLabel: "Chrome Web Store — coming soon",
     footerNote: "QR codes, made easy.",
     copied: "Content copied.",
     copyError: "Could not copy the content.",
+    pasted: "Content pasted from clipboard.",
+    pasteEmpty: "Your clipboard is empty.",
+    pasteError: "Could not read the clipboard. Allow clipboard access and try again.",
     generated: "Your QR code is ready.",
     inputRequired: "Enter some text or a link to create a QR code.",
     qrError: "This content could not be encoded. Try using less text.",
@@ -36,7 +39,7 @@ const translations = {
     intro: "Transformez un lien ou un texte en QR code. Personnalisez-le et téléchargez-le au format souhaité.",
     contentLabel: "Contenu",
     contentPlaceholder: "Collez un lien ou saisissez du texte…",
-    usePageUrl: "Utiliser l’adresse de cette page",
+    pasteContent: "Coller depuis le presse-papiers",
     copyContent: "Copier le contenu",
     qrColor: "Couleur du QR",
     background: "Arrière-plan",
@@ -46,12 +49,15 @@ const translations = {
     emptyState: "Saisissez du contenu pour créer votre QR code.",
     localNote: "Généré localement dans votre navigateur. Votre contenu n’est jamais envoyé à un serveur.",
     download: "Télécharger le QR code",
-    extensionLabel: "EXTENSION CHROME",
-    extensionCopy: "Vous utilisez l’extension TabQR pour Chrome ?",
-    extensionPrivacy: "Lire la politique de confidentialité de l’extension",
+    extensionPrivacy: "Confidentialité de l’extension",
+    storeComingSoon: "Bientôt",
+    storeLabel: "Chrome Web Store — bientôt disponible",
     footerNote: "Les QR codes en toute simplicité.",
     copied: "Contenu copié.",
     copyError: "Impossible de copier le contenu.",
+    pasted: "Contenu collé depuis le presse-papiers.",
+    pasteEmpty: "Le presse-papiers est vide.",
+    pasteError: "Impossible de lire le presse-papiers. Autorisez son accès puis réessayez.",
     generated: "Votre QR code est prêt.",
     inputRequired: "Saisissez du texte ou un lien pour créer un QR code.",
     qrError: "Ce contenu n’a pas pu être encodé. Essayez avec moins de texte.",
@@ -71,7 +77,7 @@ const backgroundInput = document.querySelector("#qr-background");
 const formatInput = document.querySelector("#qr-format");
 const downloadButton = document.querySelector("#download-qr");
 const copyButton = document.querySelector("#copy-content");
-const usePageUrlButton = document.querySelector("#use-page-url");
+const pasteButton = document.querySelector("#paste-content");
 let qrMatrix = null;
 let updateTimer = 0;
 let currentLanguage = "en";
@@ -88,6 +94,9 @@ function translatePage(language) {
   });
   document.querySelectorAll("[data-i18n-placeholder]").forEach((element) => {
     element.placeholder = messages[element.dataset.i18nPlaceholder];
+  });
+  document.querySelectorAll("[data-i18n-aria-label]").forEach((element) => {
+    element.setAttribute("aria-label", messages[element.dataset.i18nAriaLabel]);
   });
   previewCanvas.setAttribute("aria-label", messages.qrPreview);
 
@@ -199,13 +208,6 @@ function createSvg(matrix, size, foreground, background) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><rect width="100%" height="100%" fill="${background}"/><g fill="${foreground}">${modules.join("")}</g></svg>`;
 }
 
-function getPageUrl() {
-  const url = new URL(window.location.href);
-  url.search = "";
-  url.hash = "";
-  return url.href;
-}
-
 contentInput.addEventListener("input", () => {
   window.clearTimeout(updateTimer);
   updateTimer = window.setTimeout(generateQr, 120);
@@ -218,9 +220,28 @@ document.querySelectorAll("[data-language]").forEach((button) => {
   button.addEventListener("click", () => translatePage(button.dataset.language));
 });
 
-usePageUrlButton.addEventListener("click", () => {
-  contentInput.value = getPageUrl();
-  generateQr();
+pasteButton.addEventListener("click", async () => {
+  status.classList.remove("is-error");
+
+  try {
+    if (!navigator.clipboard?.readText) {
+      throw new Error("Clipboard reading is not available in this browser.");
+    }
+
+    const clipboardText = await navigator.clipboard.readText();
+    if (!clipboardText.trim()) {
+      status.textContent = translations[currentLanguage].pasteEmpty;
+      return;
+    }
+
+    contentInput.value = clipboardText;
+    generateQr();
+    status.textContent = translations[currentLanguage].pasted;
+  } catch (error) {
+    const detail = error instanceof Error ? ` ${error.message}` : "";
+    status.textContent = `${translations[currentLanguage].pasteError}${detail}`;
+    status.classList.add("is-error");
+  }
 });
 
 copyButton.addEventListener("click", async () => {
@@ -293,6 +314,5 @@ downloadButton.addEventListener("click", async () => {
   }
 });
 
-contentInput.value = getPageUrl();
 translatePage("en");
 generateQr();

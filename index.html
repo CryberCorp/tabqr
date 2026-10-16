@@ -38,9 +38,9 @@
           <textarea id="qr-content" rows="4" spellcheck="false" data-i18n-placeholder="contentPlaceholder" placeholder="Paste a link or type any text…"></textarea>
 
           <div class="input-actions">
-            <button id="use-page-url" class="secondary-button" type="button">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4zM4 9h16M8 7h.01M11 7h.01"/></svg>
-              <span data-i18n="usePageUrl">Use this page’s URL</span>
+            <button id="paste-content" class="secondary-button" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6l1 2h3v14H5V6h3z"/><path d="M9 4a3 3 0 0 0 6 0M8 12h8M8 16h8"/></svg>
+              <span data-i18n="pasteContent">Paste from clipboard</span>
             </button>
             <button id="copy-content" class="secondary-button" type="button">
               <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>
@@ -92,12 +92,14 @@
     </main>
 
     <footer class="site-footer">
-      <div class="extension-space">
-        <p class="eyebrow" data-i18n="extensionLabel">CHROME EXTENSION</p>
-        <p data-i18n="extensionCopy">Using the TabQR Chrome extension?</p>
-        <a href="https://crybercorp.github.io/tabqr/privacy-policy/" data-i18n="extensionPrivacy">Read the extension privacy policy</a>
-      </div>
-      <p class="footer-note">TabQR <span aria-hidden="true">·</span> <span data-i18n="footerNote">QR codes, made easy.</span></p>
+      <span class="footer-brand">TabQR <span aria-hidden="true">·</span> <span data-i18n="footerNote">QR codes, made easy.</span></span>
+      <nav class="footer-links" aria-label="Extension links">
+        <a href="https://crybercorp.github.io/tabqr/privacy-policy/" data-i18n="extensionPrivacy">Extension privacy</a>
+        <span class="store-placeholder" aria-label="Chrome Web Store — coming soon" data-i18n-aria-label="storeLabel">
+          <img src="assets/chrome-web-store.svg" alt="" width="20" height="20">
+          <span data-i18n="storeComingSoon">Coming soon</span>
+        </span>
+      </nav>
     </footer>
   </div>
 </body>
