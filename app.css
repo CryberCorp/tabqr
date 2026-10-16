@@ -121,7 +121,7 @@ input:focus-visible {
 }
 
 main {
-  padding: clamp(22px, 3.5vw, 36px) 0 24px;
+  padding: clamp(16px, 1.8vw, 24px) 0 16px;
 }
 
 .intro {
