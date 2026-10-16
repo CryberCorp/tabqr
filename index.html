@@ -4,109 +4,101 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <meta name="description" content="TabQR — create and customize QR codes in Chrome. Read the privacy policy in English or French.">
-  <title>TabQR</title>
-  <style>
-    @font-face {
-      font-family: "Doto";
-      src: url("assets/fonts/Doto-Black.ttf") format("truetype");
-      font-style: normal;
-      font-weight: 900;
-      font-display: swap;
-    }
-
-    :root {
-      color-scheme: light;
-      font: 16px/1.6 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: #111;
-      background: #f4f4f1;
-      font-synthesis: none;
-      text-rendering: optimizeLegibility;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      display: grid;
-      min-height: 100vh;
-      margin: 0;
-      padding: 24px;
-      place-items: center;
-    }
-
-    main {
-      width: min(100%, 620px);
-      padding: clamp(28px, 7vw, 56px);
-      border: 1px solid #c9c9c3;
-      background: #fff;
-    }
-
-    h1 {
-      margin: 0;
-      font-family: "Doto", sans-serif;
-      font-weight: 900;
-      font-size: clamp(2.5rem, 10vw, 4rem);
-      line-height: 1;
-      letter-spacing: -0.07em;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .brand img {
-      width: 40px;
-      height: 40px;
-      flex: 0 0 auto;
-    }
-
-    p {
-      margin: 16px 0 28px;
-      color: #5e5e58;
-    }
-
-    nav {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    a {
-      display: inline-block;
-      padding: 10px 14px;
-      border: 1px solid #111;
-      color: #111;
-      text-decoration: none;
-    }
-
-    a:hover,
-    a:focus-visible {
-      background: #111;
-      color: #fff;
-    }
-
-    a:focus-visible {
-      outline: 2px solid #111;
-      outline-offset: 2px;
-    }
-  </style>
+  <meta name="description" content="Create and customize QR codes in your browser with TabQR. Free, private and processed locally.">
+  <meta name="theme-color" content="#f4f4f1">
+  <title>TabQR — QR Code Generator</title>
+  <link rel="icon" href="assets/tabqr-icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="app.css">
+  <script src="assets/scripts/qrcode-generator.js" defer></script>
+  <script src="app.js" defer></script>
 </head>
 <body>
-  <main>
-    <div class="brand">
-      <img src="assets/tabqr-icon.svg" alt="">
-      <h1>TabQR</h1>
-    </div>
-    <p lang="en">Create and customize QR codes directly in Chrome.<br>Choose a language to read the privacy policy.</p>
-    <p lang="fr">Générez et personnalisez vos codes QR directement dans Chrome.<br>Choisissez votre langue pour consulter la politique de confidentialité.</p>
-    <nav aria-label="Privacy policy">
-      <a href="https://crybercorp.github.io/tabqr/privacy-policy/" lang="en">Privacy Policy — English</a>
-      <a href="https://crybercorp.github.io/tabqr/privacy-policy/fr/" lang="fr">Politique de confidentialité — Français</a>
-    </nav>
-  </main>
+  <div class="site-shell">
+    <header class="site-header">
+      <a class="brand" href="./" aria-label="TabQR home">
+        <img src="assets/tabqr-icon.svg" alt="" width="38" height="38">
+        <span>TabQR</span>
+      </a>
+      <nav class="language-switch" aria-label="Language">
+        <button type="button" data-language="en" aria-pressed="true">EN</button>
+        <button type="button" data-language="fr" aria-pressed="false">FR</button>
+      </nav>
+    </header>
+
+    <main>
+      <section class="intro" aria-labelledby="page-title">
+        <p class="eyebrow" data-i18n="eyebrow">QR CODE GENERATOR</p>
+        <h1 id="page-title">Create a QR code.<br>Keep it simple.</h1>
+        <p class="intro-copy" data-i18n="intro">Turn a link or any text into a QR code. Customize it and download it in the format you need.</p>
+      </section>
+
+      <section class="generator" aria-label="TabQR QR code generator">
+        <div class="controls">
+          <label class="field-label" for="qr-content" data-i18n="contentLabel">Content</label>
+          <textarea id="qr-content" rows="4" spellcheck="false" data-i18n-placeholder="contentPlaceholder" placeholder="Paste a link or type any text…"></textarea>
+
+          <div class="input-actions">
+            <button id="use-page-url" class="secondary-button" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4zM4 9h16M8 7h.01M11 7h.01"/></svg>
+              <span data-i18n="usePageUrl">Use this page’s URL</span>
+            </button>
+            <button id="copy-content" class="secondary-button" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>
+              <span data-i18n="copyContent">Copy content</span>
+            </button>
+          </div>
+
+          <div class="options">
+            <label class="option">
+              <span data-i18n="qrColor">QR color</span>
+              <input id="qr-color" type="color" value="#000000" aria-label="QR color">
+            </label>
+            <label class="option">
+              <span data-i18n="background">Background</span>
+              <input id="qr-background" type="color" value="#ffffff" aria-label="Background">
+            </label>
+            <label class="option format-option">
+              <span data-i18n="format">Format</span>
+              <select id="qr-format" aria-label="Download format">
+                <option value="png">PNG</option>
+                <option value="webp">WebP</option>
+                <option value="jpeg">JPEG</option>
+                <option value="svg">SVG</option>
+              </select>
+            </label>
+          </div>
+          <p class="privacy-note">
+            <span class="privacy-dot" aria-hidden="true"></span>
+            <span data-i18n="localNote">Generated locally in your browser. Your content is never sent to a server.</span>
+          </p>
+        </div>
+
+        <div class="result">
+          <div class="result-heading">
+            <h2 data-i18n="yourQr">Your QR code</h2>
+            <span class="ready-badge"><span class="privacy-dot" aria-hidden="true"></span><span data-i18n="ready">READY</span></span>
+          </div>
+          <div class="qr-card">
+            <canvas id="qr-preview" width="744" height="744" aria-label="Generated QR code"></canvas>
+            <p id="empty-state" class="empty-state" hidden data-i18n="emptyState">Enter content to create your QR code.</p>
+          </div>
+          <p id="status" class="status" role="status" aria-live="polite"></p>
+          <button id="download-qr" class="primary-button" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 17v3h14v-3"/></svg>
+            <span data-i18n="download">Download QR code</span>
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="extension-space">
+        <p class="eyebrow" data-i18n="extensionLabel">CHROME EXTENSION</p>
+        <p data-i18n="extensionCopy">Using the TabQR Chrome extension?</p>
+        <a href="https://crybercorp.github.io/tabqr/privacy-policy/" data-i18n="extensionPrivacy">Read the extension privacy policy</a>
+      </div>
+      <p class="footer-note">TabQR <span aria-hidden="true">·</span> <span data-i18n="footerNote">QR codes, made easy.</span></p>
+    </footer>
+  </div>
 </body>
 </html>
