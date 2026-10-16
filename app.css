@@ -522,6 +522,21 @@ h1 {
     padding: clamp(18px, 2.1vw, 32px);
   }
 
+  .controls {
+    display: flex;
+    flex-direction: column;
+  }
+
+  #qr-content {
+    min-height: clamp(120px, 18vh, 220px);
+    flex: 1 1 auto;
+  }
+
+  .privacy-note {
+    margin-top: auto;
+    padding-top: 14px;
+  }
+
   .result {
     min-height: 0;
   }
@@ -557,6 +572,7 @@ h1 {
   .controls {
     border-inline-end: 0;
     border-bottom: 1px solid var(--line);
+    display: block;
   }
 
   .result {
@@ -589,6 +605,10 @@ h1 {
   .controls,
   .result {
     padding: 16px;
+  }
+
+  #qr-content {
+    min-height: 88px;
   }
 
   .options {
