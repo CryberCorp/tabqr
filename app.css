@@ -49,7 +49,7 @@ input {
 
 .site-shell {
   display: flex;
-  width: min(100%, 1440px);
+  width: min(100%, 1200px);
   flex-direction: column;
   min-height: 100vh;
   min-height: 100svh;
@@ -481,19 +481,20 @@ h1 {
 
   main {
     display: flex;
-    min-height: 0;
     flex: 1 1 auto;
     flex-direction: column;
-    padding: clamp(12px, 1.8vh, 22px) 0;
+    justify-content: center;
+    padding: 24px 0;
   }
 
   .intro {
     display: grid;
-    max-width: none;
+    width: min(100%, 1120px);
+    max-width: 1120px;
     grid-template-columns: minmax(0, 1.1fr) minmax(240px, 0.9fr);
     align-items: end;
     column-gap: clamp(24px, 5vw, 72px);
-    margin-bottom: clamp(10px, 1.5vh, 18px);
+    margin: 0 auto 16px;
   }
 
   .intro .eyebrow {
@@ -512,43 +513,98 @@ h1 {
   }
 
   .generator {
-    min-height: 0;
-    flex: 1 1 auto;
+    width: min(100%, 1120px);
+    flex: 0 0 auto;
+    margin-inline: auto;
     grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.92fr);
   }
 
   .controls,
   .result {
-    padding: clamp(18px, 2.1vw, 32px);
+    padding: clamp(18px, 2vw, 26px);
   }
 
   .controls {
-    display: flex;
-    flex-direction: column;
+    border-inline-end: 1px solid var(--line);
   }
 
   #qr-content {
-    min-height: clamp(120px, 18vh, 220px);
-    flex: 1 1 auto;
-  }
-
-  .privacy-note {
-    margin-top: auto;
-    padding-top: 14px;
+    min-height: 112px;
   }
 
   .result {
-    min-height: 0;
+    min-height: auto;
+    padding-top: clamp(18px, 2vw, 26px);
   }
 
   .qr-card {
-    min-height: 0;
-    flex: 1 1 auto;
+    min-height: 250px;
   }
 
   #qr-preview {
-    width: min(100%, 48vh, 460px);
-    max-height: 100%;
+    width: min(100%, 230px);
+  }
+}
+
+@media (min-width: 701px) and (max-height: 700px) {
+  main {
+    padding: 10px 0;
+  }
+
+  .intro {
+    margin-bottom: 9px;
+  }
+
+  .intro .eyebrow {
+    margin-bottom: 4px;
+  }
+
+  h1 {
+    font-size: clamp(26px, 3vw, 32px);
+  }
+
+  .intro-copy {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .controls,
+  .result {
+    padding: 14px 20px;
+  }
+
+  #qr-content {
+    min-height: 72px;
+  }
+
+  .options {
+    margin-top: 12px;
+  }
+
+  .privacy-note {
+    margin-top: 10px;
+  }
+
+  .result-heading {
+    margin-bottom: 6px;
+  }
+
+  .qr-card {
+    min-height: 180px;
+  }
+
+  #qr-preview {
+    width: min(100%, 30vh, 180px);
+  }
+
+  .status {
+    min-height: 18px;
+    margin-top: 6px;
+  }
+
+  .primary-button {
+    min-height: 40px;
+    margin-top: 4px;
   }
 }
 
@@ -572,7 +628,6 @@ h1 {
   .controls {
     border-inline-end: 0;
     border-bottom: 1px solid var(--line);
-    display: block;
   }
 
   .result {
