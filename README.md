@@ -17,21 +17,23 @@ src/                          Sources du site : tout ce qui se modifie
     js/translations.js        Textes des 33 langues + règles typographiques
     js/vendor/                Bibliothèque QR tierce, embarquée telle quelle
     fonts/  icons/  images/   Police, icônes de l’app installée, logos
+  articles/                   Guides en Markdown : articles/<langue>/<adresse>.md (+ _template.md)
   privacy-policy/             Politiques de confidentialité (pages écrites à la main)
   manifest.webmanifest        Description de l’application installable (PWA)
   sw.js                       Service worker (hors ligne) ; sa liste de fichiers est générée
   google96bb0ab2759d810e.html Vérification Google Search Console : ne pas supprimer ni renommer
 scripts/
   build.mjs                   Génère le site publié : src/ → dist/
+  articles.mjs                Transforme les guides Markdown en pages (appelé par build.mjs)
   serve.mjs                   Aperçu local de dist/
   watch.mjs                   Régénère dist/ à chaque modification de src/
 .github/workflows/deploy.yml  Génère et publie le site à chaque push sur main
 .vscode/settings.json         Live Server sert dist/ (et non le modèle de src/)
 dist/                         Site généré : jamais versionné, jamais modifié à la main
-package.json                  Commandes npm (aucune dépendance)
+package.json                  Commandes npm et unique dépendance : marked (lecture du Markdown)
 ```
 
-Aucune dépendance à installer : seul Node.js 20 ou plus récent est nécessaire.
+Prérequis : Node.js 20 ou plus récent. Une fois après chaque clonage du dépôt : `npm install`.
 
 ## Commandes
 
@@ -60,6 +62,19 @@ npm run serve    # sert le dernier dist/ généré
    - styles et comportement : `src/assets/css/app.css`, `src/assets/js/app.js`.
 2. `npm run dev`, puis vérifier dans le navigateur : la page anglaise et quelques langues (dont l’arabe, écrit de droite à gauche), la génération du QR, le copier/coller, les exports PNG/WebP/JPEG/SVG, l’affichage mobile.
 3. `git diff --check`, `git status`, commit, push : le site se publie seul (voir plus bas).
+
+### Ajouter un guide (article)
+
+1. Copier `src/articles/_template.md` dans `src/articles/<langue>/` (`en`, `fr`, `de`…). Le nom du fichier devient l’adresse : `src/articles/fr/mon-guide.md` → `/fr/articles/mon-guide/` (minuscules, mots séparés par des tirets).
+2. Remplir l’en-tête :
+   - `title` et `description` (environ 150 caractères, affichée dans Google et dans la liste des guides) ;
+   - `date` (et plus tard `updated`) au format `AAAA-MM-JJ` ;
+   - `translationKey` : la même clé pour toutes les traductions d’un même guide, qui sont alors reliées entre elles (boutons de langue, `hreflang`) ;
+   - `draft: true` tant que le guide n’est pas prêt (il n’est pas publié).
+3. Écrire en Markdown : titres `##` et `###`, listes, **gras**, liens, tableaux, citations `>`, images. Les liens et images qui commencent par `/` partent de la racine du site : `[le générateur](/fr/)`, `![Texte](/assets/images/articles/photo.png)` (images dans `src/assets/images/articles/`).
+4. `npm run dev` et vérifier `/articles/` ou `/fr/articles/`, puis commit et push.
+
+Tout le reste est automatique : page du guide (fil d’Ariane, date, temps de lecture, données structurées `Article`), liste des guides de la langue, sitemap, et lien **Guides** du menu « Plus » (vers les guides de la langue de la page, sinon vers les guides anglais). Les textes de l’interface des guides sont dans `translations.js` (clés `guides…`, `readingTime`, `createQr`…), déjà traduits dans les 33 langues.
 
 ### Ajouter ou retirer une langue
 

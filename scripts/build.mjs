@@ -8,6 +8,7 @@
 // - ?v= on local CSS/JS set from their content, so browsers never keep an
 //   outdated file;
 // - the offline file list and cache version in dist/sw.js;
+// - articles: src/articles/<language>/*.md become guide pages (scripts/articles.mjs);
 // - every other file of src/ is copied as is.
 // GitHub Actions (.github/workflows/deploy.yml) runs this build and publishes
 // dist/ on every push: generated files are never committed.
@@ -16,6 +17,7 @@ import { createHash } from "node:crypto";
 import { cpSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, posix } from "node:path";
 import { fileURLToPath } from "node:url";
+import { buildArticles, readArticles } from "./articles.mjs";
 
 // Settings ------------------------------------------------------------------
 
@@ -49,6 +51,9 @@ const { translations, typeset } = new Function(
   `${read("assets/js/translations.js")}\nreturn { translations, typeset };`,
 )();
 const languages = Object.keys(translations);
+// Guides (Markdown articles) and the languages they exist in.
+const articles = readArticles(srcDir);
+const articleLanguages = new Set(articles.map(({ language }) => language));
 const shareImage = `${siteUrl}assets/icons/icon-512.png`;
 
 const pathFor = (language) => (language === defaultLanguage ? "" : `${language.toLowerCase()}/`);
@@ -163,6 +168,16 @@ function render(language) {
     `$1${privacyUrls[language] ?? privacyUrls[defaultLanguage]}$2`,
   );
 
+  // "Guides" in the "More" menu: same language when it has guides, else English.
+  // "./" and "../" are kept as is by the asset path rewrite below.
+  html = html.replace(/(<a href=")[^"]*(" data-guides-link)/, (match, start, end) => {
+    const target = articleLanguages.has(language) ? "./articles/" : `${isRoot ? "./" : "../"}articles/`;
+    return `${start}${target}${end}`;
+  });
+  if (!articles.length) {
+    html = html.replace(/\n[ \t]*<a href="[^"]*" data-guides-link[^>]*>[^<]*<\/a>/, "");
+  }
+
   // Chrome Web Store: links appear once the URL is set. The header button
   // (data-desktop-chromium) stays hidden here: app.js shows it only on
   // desktop browsers that install Chrome Web Store extensions.
@@ -180,7 +195,7 @@ function render(language) {
   return html;
 }
 
-function sitemap() {
+function sitemap(extraEntries = []) {
   const entry = (loc, alternates) => [
     "  <url>",
     `    <loc>${loc}</loc>`,
@@ -194,6 +209,7 @@ function sitemap() {
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">',
     ...languages.map((language) => entry(urlFor(language), appAlternates)),
     ...Object.values(privacyUrls).map((url) => entry(url, privacyAlternates)),
+    ...extraEntries.map(({ loc, alternates }) => entry(loc, alternates)),
     "</urlset>",
     "",
   ].join("\n");
@@ -235,7 +251,11 @@ mkdirSync(distDir, { recursive: true });
 for (const entry of readdirSync(distDir)) {
   rmSync(join(distDir, entry), { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
 }
-cpSync(srcDir, distDir, { recursive: true, filter: (path) => !generatedFromSrc.has(path) });
+const articleSources = join(srcDir, "articles");
+cpSync(srcDir, distDir, {
+  recursive: true,
+  filter: (path) => !generatedFromSrc.has(path) && path !== articleSources,
+});
 
 // Secondary pages (privacy policy…) are copied as is; only their local CSS/JS
 // get a content ?v=, resolved from the page's own folder.
@@ -257,7 +277,20 @@ for (const { path, html } of pages) {
   mkdirSync(dirname(file), { recursive: true });
   writeFileSync(file, html);
 }
-writeFileSync(join(distDir, "sitemap.xml"), sitemap());
+const guides = buildArticles({
+  articles,
+  translations,
+  distDir,
+  siteUrl,
+  defaultLanguage,
+  pathFor,
+  nativeName,
+  typeset,
+  escapeHtml,
+  rtlLanguages,
+  stylesheet: `assets/css/page.css?v=${hash(read("assets/css/page.css"))}`,
+});
+writeFileSync(join(distDir, "sitemap.xml"), sitemap(guides.sitemapEntries));
 
 const { urls, version } = offlineFiles(pages);
 writeFileSync(join(distDir, "sw.js"), replaceBlock(read("sw.js"), "// build:precache", "// /build:precache", [
@@ -267,4 +300,4 @@ writeFileSync(join(distDir, "sw.js"), replaceBlock(read("sw.js"), "// build:prec
   "];",
 ]));
 
-console.log(`Built ${pages.length} language pages, sitemap.xml and sw.js (${urls.length} offline files, version ${version}).`);
+console.log(`Built ${pages.length} language pages, ${articles.length} articles in ${guides.languages.length} languages, sitemap.xml and sw.js (${urls.length} offline files, version ${version}).`);
