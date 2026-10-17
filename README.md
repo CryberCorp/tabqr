@@ -102,6 +102,7 @@ Le menu des langues du pied de page, les balises `hreflang` et le sitemap se met
 - **Canonical vers soi-même** sur chaque page, et **`hreflang` réciproques** vers les 33 langues plus `x-default` (la page anglaise), dans le `<head>` et dans `sitemap.xml`.
 - **Liens de langue explorables** : le menu des langues du pied de page est fait de vrais liens `<a hreflang>`, que les visiteurs comme les moteurs de recherche peuvent suivre. Le choix d’un visiteur y est mémorisé.
 - **Pas de redirection selon la langue supposée** (règle Google pour les sites multilingues) : la racine ne redirige que si le visiteur a lui-même choisi une langue. Sinon, un bandeau rédigé dans la langue de son navigateur lui propose sa version. Les pages de langue ne redirigent jamais.
+- **Plans du site** : `sitemap.xml` (pour les moteurs de recherche, avec la date `lastmod` des guides et des pages) et une page **Plan du site** lisible dans chaque langue (`/sitemap/`, `/fr/sitemap/`…), accessible depuis le menu « Plus ». Les deux sont régénérés à chaque publication.
 - **Open Graph** (partage sur les réseaux sociaux) et **données structurées** `WebApplication` sur chaque page.
 
 ### Google Search Console

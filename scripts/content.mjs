@@ -154,12 +154,13 @@ function createRenderer(options) {
   }
 
   // alternates: [[language, absolute URL], …] of the translations, this page included.
-  function page({ language, path, title, description, alternates, body, structuredData, ogType, mainClass }) {
+  // languageButtons: false when the page lists the languages itself (sitemap).
+  function page({ language, path, title, description, alternates, body, structuredData, ogType, mainClass, languageButtons = true }) {
     const text = textFor(language);
     const root = upTo(path);
     const home = `${root}${pathFor(language)}` || "./";
     const xDefault = alternates.find(([hreflang]) => hreflang === defaultLanguage) ?? alternates[0];
-    const languageLinks = alternates.length > 1
+    const languageLinks = languageButtons && alternates.length > 1
       ? `
       <nav aria-label="${escapeHtml(text.language)}">
 ${alternates.map(([hreflang, url]) => `        <a href="${url.replace(siteUrl, root)}" lang="${hreflang}"${hreflang === language ? ' aria-current="page"' : ""}>${escapeHtml(nativeName(hreflang))}</a>`).join("\n")}
@@ -291,7 +292,7 @@ ${content}
     </article>
     <p class="article-back"><a href="../"><span aria-hidden="true">←</span> ${escapeHtml(text.allGuides)}</a></p>`,
     }), article.source);
-    sitemapEntries.push({ loc: `${siteUrl}${path}`, alternates: r.withXDefault(alternates) });
+    sitemapEntries.push({ loc: `${siteUrl}${path}`, alternates: r.withXDefault(alternates), lastmod: lastDate });
   }
 
   // One index per language, newest first.
@@ -332,7 +333,12 @@ ${content}
 ${list}
     </ul>`,
     }), `the ${language} guide index`);
-    sitemapEntries.push({ loc: `${siteUrl}${path}`, alternates: r.withXDefault(indexAlternates) });
+    const newest = articles
+      .filter((article) => article.language === language)
+      .map((article) => article.updated || article.date)
+      .sort()
+      .at(-1);
+    sitemapEntries.push({ loc: `${siteUrl}${path}`, alternates: r.withXDefault(indexAlternates), lastmod: newest });
   }
 
   return { languages, sitemapEntries, write: r.write };
@@ -384,7 +390,61 @@ export function buildPages(options) {
 ${r.markdown(entry.body, language, path)}
     </div>${note}`,
     }), entry.source);
-    sitemapEntries.push({ loc: `${siteUrl}${path}`, alternates: r.withXDefault(alternates) });
+    sitemapEntries.push({ loc: `${siteUrl}${path}`, alternates: r.withXDefault(alternates), lastmod: entry.updated });
   }
   return { sitemapEntries };
+}
+
+// Readable sitemap for visitors, one per site language (/sitemap/, /fr/sitemap/…):
+// the generator, the guides and pages of that language (English when none
+// exist yet), and every language of the site. sitemap.xml stays for search engines.
+export function buildSitemapPages(options) {
+  const r = createRenderer(options);
+  const write = options.write ?? r.write;
+  const { articles, pages, siteLanguages, siteUrl, pathFor, typeset, escapeHtml, defaultLanguage } = r;
+  const articlePath = (article) => `${pathFor(article.language)}articles/${article.slug}/`;
+  const pagePath = (page) => (page.path ? `${page.path.replace(/^\/+|\/+$/g, "")}/` : `${pathFor(page.language)}${page.slug}/`);
+  const inLanguage = (items, language) => {
+    const own = items.filter((item) => item.language === language);
+    return own.length ? own : items.filter((item) => item.language === defaultLanguage);
+  };
+  const alternates = siteLanguages.map((language) => [language, `${siteUrl}${pathFor(language)}sitemap/`]);
+
+  for (const language of siteLanguages) {
+    const messages = { ...options.translations[defaultLanguage], ...options.translations[language] };
+    const path = `${pathFor(language)}sitemap/`;
+    const root = upTo(path);
+    const link = (target, label, lang) => `<a href="${root}${target}"${lang && lang !== language ? ` lang="${lang}"` : ""}>${escapeHtml(typeset(label, lang ?? language))}</a>`;
+    const guides = inLanguage(articles, language).sort((a, b) => a.title.localeCompare(b.title, language));
+    const guideLanguage = guides[0]?.language ?? language;
+    const contentPages = inLanguage(pages, language).sort((a, b) => a.title.localeCompare(b.title, language));
+    const section = (title, items) => (items.length
+      ? `
+      <h2>${escapeHtml(typeset(title, language))}</h2>
+      <ul>
+${items.map((item) => `        <li>${item}</li>`).join("\n")}
+      </ul>`
+      : "");
+
+    write(path, r.page({
+      language,
+      path,
+      title: messages.sitemap,
+      description: messages.description,
+      alternates,
+      ogType: "website",
+      mainClass: "content-page",
+      languageButtons: false,
+      structuredData: { "@context": "https://schema.org", "@type": "WebPage", name: messages.sitemap, inLanguage: language, url: `${siteUrl}${path}` },
+      body: `    <h1>${escapeHtml(typeset(messages.sitemap, language))}</h1>
+    <div class="prose">${section("TabQR", [link(pathFor(language), messages.title)])}${
+      guides.length ? section(messages.guidesTitle, [link(`${pathFor(guideLanguage)}articles/`, messages.allGuides), ...guides.map((guide) => link(articlePath(guide), guide.title, guide.language))]) : ""}${
+      section(messages.pages, contentPages.map((page) => link(pagePath(page), page.title, page.language)))}
+      <h2>${escapeHtml(typeset(messages.language, language))}</h2>
+      <ul class="sitemap-languages">
+${siteLanguages.map((other) => `        <li>${link(pathFor(other), options.nativeName(other), other)}</li>`).join("\n")}
+      </ul>
+    </div>`,
+    }), `the ${language} sitemap page`);
+  }
 }

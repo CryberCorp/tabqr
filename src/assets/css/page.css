@@ -314,6 +314,16 @@ a {
   font-size: 0.8rem;
 }
 
+/* Readable sitemap (/sitemap/): languages in columns. */
+.sitemap-languages {
+  columns: 3 10rem;
+  column-gap: 24px;
+}
+
+.sitemap-languages li {
+  break-inside: avoid;
+}
+
 @media (max-width: 600px) {
   body {
     padding: 0;

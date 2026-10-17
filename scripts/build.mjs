@@ -18,7 +18,7 @@ import { createHash } from "node:crypto";
 import { cpSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, posix } from "node:path";
 import { fileURLToPath } from "node:url";
-import { buildArticles, buildPages, readArticles, readPages } from "./content.mjs";
+import { buildArticles, buildPages, buildSitemapPages, readArticles, readPages } from "./content.mjs";
 
 // Settings ------------------------------------------------------------------
 
@@ -198,9 +198,12 @@ function render(language) {
 }
 
 function sitemap(extraEntries = []) {
-  const entry = (loc, alternates) => [
+  // lastmod only when the date is known (guides and pages): Google ignores
+  // dates that are not reliable, so generator pages have none.
+  const entry = (loc, alternates, lastmod) => [
     "  <url>",
     `    <loc>${loc}</loc>`,
+    ...(lastmod ? [`    <lastmod>${lastmod}</lastmod>`] : []),
     ...alternates.map(([hreflang, href]) => `    <xhtml:link rel="alternate" hreflang="${hreflang}" href="${href}"/>`),
     "  </url>",
   ].join("\n");
@@ -209,7 +212,7 @@ function sitemap(extraEntries = []) {
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">',
     ...languages.map((language) => entry(urlFor(language), appAlternates)),
-    ...extraEntries.map(({ loc, alternates }) => entry(loc, alternates)),
+    ...extraEntries.map(({ loc, alternates, lastmod }) => entry(loc, alternates, lastmod)),
     "</urlset>",
     "",
   ].join("\n");
@@ -293,6 +296,8 @@ const contentOptions = {
 const guides = buildArticles({ ...contentOptions, articles });
 // Same address registry as the guides: a page can never overwrite a guide.
 const markdownPages = buildPages({ ...contentOptions, pages: contentPages, write: guides.write });
+// Readable sitemap for visitors in every language ("Sitemap" in the More menu).
+buildSitemapPages({ ...contentOptions, articles, pages: contentPages, siteLanguages: languages, write: guides.write });
 writeFileSync(join(distDir, "sitemap.xml"), sitemap([...markdownPages.sitemapEntries, ...guides.sitemapEntries]));
 
 const { urls, version } = offlineFiles(pages);
