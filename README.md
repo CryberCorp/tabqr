@@ -19,7 +19,7 @@ src/                          Sources du site : tout ce qui se modifie
     fonts/  icons/  images/   Police, icônes de l’app installée, logos
   articles/                   Guides en Markdown : articles/<langue>/<adresse>.md (+ _template.md)
   pages/                      Pages en Markdown (politique de confidentialité…) : pages/<langue>/<nom>.md (+ _template.md)
-  privacy-policy/en/          Ancienne adresse anglaise de la politique, conservée comme redirection
+  privacy-policy/en/, fr/     Anciennes adresses de la politique, conservées comme redirections
   manifest.webmanifest        Description de l’application installable (PWA)
   sw.js                       Service worker (hors ligne) ; sa liste de fichiers est générée
   google96bb0ab2759d810e.html Vérification Google Search Console : ne pas supprimer ni renommer
@@ -82,7 +82,7 @@ Tout le reste est automatique : page du guide (fil d’Ariane, date, temps de le
 Même principe que les guides, dans `src/pages/<langue>/` (modèle : `src/pages/_template.md`) :
 
 - `title` et `description` ; `updated` (affichée « Dernière mise à jour ») ; `note` (petit texte en bas de page, liens Markdown acceptés) ; `translationKey` pour relier les traductions ; `draft: true` pour ne pas publier.
-- Adresse par défaut : `/<langue>/<nom>/` (`/<nom>/` en anglais). Pour garder une adresse précise, ajouter `path` : c’est le cas de la politique de confidentialité (`path: privacy-policy/` et `path: privacy-policy/fr/`).
+- Adresse par défaut : `/<langue>/<nom>/` (`/<nom>/` en anglais). Pour garder une adresse précise, ajouter `path` : c’est le cas de la politique anglaise (`path: privacy-policy/`), dont l’adresse est enregistrée dans le Chrome Web Store. La version française suit l’adresse par défaut : `/fr/privacy-policy/`.
 - Pour modifier la politique de confidentialité : éditer `src/pages/en/privacy-policy.md` et `src/pages/fr/privacy-policy.md`, et mettre à jour `updated` dans les deux.
 
 Deux fichiers qui produiraient la même adresse arrêtent la génération avec un message clair.
@@ -139,9 +139,9 @@ Adresses publiées :
 
 - Application : <https://crybercorp.github.io/tabqr/> (anglais), `…/fr/`, `…/de/`, etc.
 - Sitemap : <https://crybercorp.github.io/tabqr/sitemap.xml>
-- Politique de confidentialité : <https://crybercorp.github.io/tabqr/privacy-policy/> (anglais) et `…/privacy-policy/fr/`
+- Politique de confidentialité : <https://crybercorp.github.io/tabqr/privacy-policy/> (anglais) et <https://crybercorp.github.io/tabqr/fr/privacy-policy/> (français)
 
-L’URL anglaise de la politique est enregistrée dans le Chrome Web Store. **Ne pas modifier le champ `path` de `src/pages/*/privacy-policy.md`** avant d’avoir mis à jour cette URL dans la fiche de l’extension.
+L’URL anglaise de la politique est enregistrée dans le Chrome Web Store. **Ne pas modifier le champ `path` de `src/pages/en/privacy-policy.md`** avant d’avoir mis à jour cette URL dans la fiche de l’extension.
 
 ## Fiche Chrome Web Store
 

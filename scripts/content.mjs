@@ -11,7 +11,7 @@
 // Pages: src/pages/<language>/<slug>.md (privacy policy…)
 //   → <language path><slug>/, or the address given in "path".
 //   Front matter: title, description, and optionally path (to keep an existing
-//   address, e.g. "privacy-policy/fr/"), updated (shown as "Last updated"),
+//   address, e.g. "privacy-policy/"), updated (shown as "Last updated"),
 //   note (small text at the bottom, Markdown links allowed), translationKey, draft.
 //
 // Every file starts with:

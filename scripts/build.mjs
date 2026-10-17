@@ -28,7 +28,7 @@ const siteUrl = "https://crybercorp.github.io/tabqr/";
 const chromeWebStoreUrl = "";
 const privacyUrls = {
   en: `${siteUrl}privacy-policy/`,
-  fr: `${siteUrl}privacy-policy/fr/`,
+  fr: `${siteUrl}fr/privacy-policy/`,
 };
 const defaultLanguage = "en";
 const rtlLanguages = new Set(["ar", "fa", "he", "ur"]);
