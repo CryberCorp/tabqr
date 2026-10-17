@@ -10,7 +10,8 @@ Les tâches en attente sont dans [TODO.md](TODO.md).
 src/                          Sources du site : tout ce qui se modifie
   index.html                  Modèle de toutes les pages de langue
   assets/
-    css/app.css               Styles et mise en page responsive
+    css/app.css               Styles et mise en page responsive du générateur
+    css/page.css              Styles des pages annexes (politiques), avec leur pied de page
     js/app.js                 Génération QR, contrôles, préférences, installation de l’app
     js/language.js            Choix de la langue (chargé dans <head>, avant l’affichage)
     js/translations.js        Textes des 33 langues + règles typographiques

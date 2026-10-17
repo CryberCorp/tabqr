@@ -238,6 +238,20 @@ for (const entry of readdirSync(distDir)) {
 }
 cpSync(srcDir, distDir, { recursive: true, filter: (path) => !generatedFromSrc.has(path) });
 
+// Secondary pages (privacy policy…) are copied as is; only their local CSS/JS
+// get a content ?v=, resolved from the page's own folder.
+for (const page of readdirSync(distDir, { recursive: true }).filter((path) => path.endsWith(".html"))) {
+  const pageDir = posix.dirname(page.split("\\").join("/"));
+  const html = readFileSync(join(distDir, page), "utf8");
+  const versioned = html.replace(
+    /(\s(?:href|src)=")([^"?#:]+\.(?:css|js))"/g,
+    (match, attribute, url) => `${attribute}${url}?v=${hash(read(posix.normalize(posix.join(pageDir, url))))}"`,
+  );
+  if (versioned !== html) {
+    writeFileSync(join(distDir, page), versioned);
+  }
+}
+
 const pages = languages.map((language) => ({ path: pathFor(language), html: render(language) }));
 for (const { path, html } of pages) {
   const file = join(distDir, path, "index.html");
