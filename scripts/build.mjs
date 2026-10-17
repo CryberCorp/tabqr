@@ -8,7 +8,8 @@
 // - ?v= on local CSS/JS set from their content, so browsers never keep an
 //   outdated file;
 // - the offline file list and cache version in dist/sw.js;
-// - articles: src/articles/<language>/*.md become guide pages (scripts/articles.mjs);
+// - Markdown content (scripts/content.mjs): guides from src/articles/<language>/*.md
+//   and pages such as the privacy policy from src/pages/<language>/*.md;
 // - every other file of src/ is copied as is.
 // GitHub Actions (.github/workflows/deploy.yml) runs this build and publishes
 // dist/ on every push: generated files are never committed.
@@ -17,7 +18,7 @@ import { createHash } from "node:crypto";
 import { cpSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, posix } from "node:path";
 import { fileURLToPath } from "node:url";
-import { buildArticles, readArticles } from "./articles.mjs";
+import { buildArticles, buildPages, readArticles, readPages } from "./content.mjs";
 
 // Settings ------------------------------------------------------------------
 
@@ -53,6 +54,7 @@ const { translations, typeset } = new Function(
 const languages = Object.keys(translations);
 // Guides (Markdown articles) and the languages they exist in.
 const articles = readArticles(srcDir);
+const contentPages = readPages(srcDir);
 const articleLanguages = new Set(articles.map(({ language }) => language));
 const shareImage = `${siteUrl}assets/icons/icon-512.png`;
 
@@ -203,12 +205,10 @@ function sitemap(extraEntries = []) {
     "  </url>",
   ].join("\n");
   const appAlternates = [...languages.map((language) => [language, urlFor(language)]), ["x-default", siteUrl]];
-  const privacyAlternates = [...Object.entries(privacyUrls), ["x-default", privacyUrls[defaultLanguage]]];
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">',
     ...languages.map((language) => entry(urlFor(language), appAlternates)),
-    ...Object.values(privacyUrls).map((url) => entry(url, privacyAlternates)),
     ...extraEntries.map(({ loc, alternates }) => entry(loc, alternates)),
     "</urlset>",
     "",
@@ -251,10 +251,11 @@ mkdirSync(distDir, { recursive: true });
 for (const entry of readdirSync(distDir)) {
   rmSync(join(distDir, entry), { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
 }
-const articleSources = join(srcDir, "articles");
+// Markdown sources are rendered by content.mjs, not published as files.
+const markdownSources = new Set([join(srcDir, "articles"), join(srcDir, "pages")]);
 cpSync(srcDir, distDir, {
   recursive: true,
-  filter: (path) => !generatedFromSrc.has(path) && path !== articleSources,
+  filter: (path) => !generatedFromSrc.has(path) && !markdownSources.has(path),
 });
 
 // Secondary pages (privacy policy…) are copied as is; only their local CSS/JS
@@ -277,8 +278,7 @@ for (const { path, html } of pages) {
   mkdirSync(dirname(file), { recursive: true });
   writeFileSync(file, html);
 }
-const guides = buildArticles({
-  articles,
+const contentOptions = {
   translations,
   distDir,
   siteUrl,
@@ -289,8 +289,11 @@ const guides = buildArticles({
   escapeHtml,
   rtlLanguages,
   stylesheet: `assets/css/page.css?v=${hash(read("assets/css/page.css"))}`,
-});
-writeFileSync(join(distDir, "sitemap.xml"), sitemap(guides.sitemapEntries));
+};
+const guides = buildArticles({ ...contentOptions, articles });
+// Same address registry as the guides: a page can never overwrite a guide.
+const markdownPages = buildPages({ ...contentOptions, pages: contentPages, write: guides.write });
+writeFileSync(join(distDir, "sitemap.xml"), sitemap([...markdownPages.sitemapEntries, ...guides.sitemapEntries]));
 
 const { urls, version } = offlineFiles(pages);
 writeFileSync(join(distDir, "sw.js"), replaceBlock(read("sw.js"), "// build:precache", "// /build:precache", [
@@ -300,4 +303,4 @@ writeFileSync(join(distDir, "sw.js"), replaceBlock(read("sw.js"), "// build:prec
   "];",
 ]));
 
-console.log(`Built ${pages.length} language pages, ${articles.length} articles in ${guides.languages.length} languages, sitemap.xml and sw.js (${urls.length} offline files, version ${version}).`);
+console.log(`Built ${pages.length} language pages, ${contentPages.length} content pages, ${articles.length} articles in ${guides.languages.length} languages, sitemap.xml and sw.js (${urls.length} offline files, version ${version}).`);
