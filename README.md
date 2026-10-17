@@ -95,18 +95,18 @@ Le menu des langues du pied de page, les balises `hreflang` et le sitemap se met
 
 ## Publier sur GitHub Pages
 
-Le workflow `.github/workflows/deploy.yml` génère `dist/` et le publie à chaque push sur `main` (ou à la demande depuis l’onglet **Actions**). Réglage requis, une seule fois : **GitHub → CryberCorp/tabqr → Settings → Pages → Source : GitHub Actions**.
+GitHub Pages publie depuis la racine de la branche `main`. Pour chaque publication, générer le site dans `dist/` et synchroniser les fichiers statiques publiés à la racine :
 
 ```powershell
-npm run build
+npm run build -- --publish
 git status
-git add <fichiers modifiés>
+git add -A
 git diff --cached --check
 git commit -m "Describe the site update"
 git push origin main
 ```
 
-Suivre la publication dans l’onglet **Actions** du dépôt, puis ouvrir les URL publiées. Ne pas basculer le dépôt en privé : le site public et la fiche du Chrome Web Store en dépendent.
+Le push déclenche GitHub Pages. Vérifier que le déploiement est terminé, puis ouvrir les URL publiées. Ne pas basculer le dépôt en privé : le site public et la fiche du Chrome Web Store en dépendent.
 
 Adresses publiées :
 

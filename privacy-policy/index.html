@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="Privacy policy for TabQR, a Chrome extension for generating QR codes.">
+  <link rel="canonical" href="https://crybercorp.github.io/tabqr/privacy-policy/">
+  <link rel="alternate" hreflang="en" href="https://crybercorp.github.io/tabqr/privacy-policy/">
+  <link rel="alternate" hreflang="fr" href="https://crybercorp.github.io/tabqr/privacy-policy/fr/">
+  <link rel="alternate" hreflang="x-default" href="https://crybercorp.github.io/tabqr/privacy-policy/">
+  <title>Privacy Policy — TabQR</title>
+  <style>
+    @font-face {
+      font-family: "Doto";
+      src: url("../assets/fonts/Doto-Black.ttf") format("truetype");
+      font-style: normal;
+      font-weight: 900;
+      font-display: swap;
+    }
+
+    :root {
+      color-scheme: light;
+      font: 16px/1.65 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #111;
+      background: #f4f4f1;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: clamp(20px, 5vw, 64px) 16px;
+    }
+
+    main {
+      width: min(100%, 760px);
+      margin: 0 auto;
+      padding: clamp(22px, 5vw, 48px);
+      border: 1px solid #c9c9c3;
+      background: #fff;
+    }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #c9c9c3;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+      font-family: "Doto", sans-serif;
+      font-size: 1.4rem;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+    }
+
+    .brand img {
+      width: 28px;
+      height: 28px;
+    }
+
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    nav a {
+      display: inline-block;
+      min-height: 36px;
+      padding: 7px 12px;
+      border: 1px solid #111;
+      background: #fff;
+      color: #111;
+      font-size: 0.9rem;
+      text-decoration: none;
+    }
+
+    nav a[aria-current="page"] {
+      border-color: #111;
+      background: #111;
+      color: #fff;
+    }
+
+    nav a:hover {
+      background: #e4e4df;
+      color: #111;
+    }
+
+    nav a[aria-current="page"]:hover {
+      background: #333;
+      color: #fff;
+    }
+
+    nav a:focus-visible {
+      outline: 2px solid #111;
+      outline-offset: 2px;
+    }
+
+    h1 {
+      margin: 32px 0 4px;
+      font-family: "Doto", sans-serif;
+      font-weight: 900;
+      font-size: clamp(1.8rem, 5vw, 2.35rem);
+      line-height: 1.15;
+      letter-spacing: -0.04em;
+    }
+
+    .updated {
+      margin: 0 0 28px;
+      color: #5e5e58;
+      font-size: 0.9rem;
+    }
+
+    h2 {
+      margin: 28px 0 8px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
+    p,
+    ul {
+      margin: 8px 0;
+    }
+
+    ul {
+      padding-inline-start: 24px;
+    }
+
+    li + li {
+      margin-top: 5px;
+    }
+
+    a {
+      color: #174ea6;
+      overflow-wrap: anywhere;
+    }
+
+    footer {
+      margin-top: 32px;
+      padding-top: 16px;
+      border-top: 1px solid #c9c9c3;
+      color: #5e5e58;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 420px) {
+      main {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="brand"><img src="../assets/images/tabqr-icon.svg" alt="">TabQR</p>
+      <nav aria-label="Language">
+        <a href="https://crybercorp.github.io/tabqr/privacy-policy/" lang="en" aria-current="page">English</a>
+        <a href="https://crybercorp.github.io/tabqr/privacy-policy/fr/" lang="fr">Français</a>
+      </nav>
+    </header>
+
+    <h1>Privacy Policy</h1>
+    <p class="updated">Last updated: October 16, 2026</p>
+
+    <p>TabQR is a Chrome extension that creates QR codes from a web address or text provided by the user. This policy explains what information the extension uses and how it is handled.</p>
+
+    <h2>Information handled by the extension</h2>
+    <ul>
+      <li><strong>Active tab URL:</strong> when you open TabQR, the extension reads the active tab’s URL so it can generate a QR code. It does not scan page content. Text from a page is handled only if you select it and explicitly ask TabQR to create a QR code from it.</li>
+      <li><strong>Text you provide:</strong> text entered in TabQR, or text you select and send to TabQR through the context menu, is used to create the QR code. This text may contain an email address, phone number, or any other information you choose to encode.</li>
+      <li><strong>Preferences:</strong> the QR code color, background color, and selected export format are stored locally in your browser.</li>
+    </ul>
+
+    <h2>Processing and storage</h2>
+    <p>QR code generation and customization happen locally in your browser. TabQR does not send this information to the developer, and the extension does not use analytics or advertising.</p>
+    <p>If you use the context menu, the selected text is temporarily stored in the extension’s local storage so it can be passed to the extension window. It is removed as soon as that window retrieves it. If the window cannot open, the text may remain in this storage until it is retrieved the next time or the extension data is cleared.</p>
+    <p>When you open the enlarged preview, the text, color, and background color are placed in the address of the extension’s internal page so the preview can be restored after a refresh. Your browser may retain this address in its local history. Color and format preferences remain stored locally until they are cleared or the extension is uninstalled.</p>
+
+    <h2>Actions you choose</h2>
+    <p>If you choose to copy the content, TabQR places it on your device’s clipboard. If you download a QR code, the file is created on demand in your browser. In the enlarged preview, clicking a link, email address, or phone number may open the corresponding website or application; subsequent handling is governed by the service or application you choose.</p>
+
+    <h2>Sharing and transmission</h2>
+    <p>The extension does not transmit QR code content, the tab URL, or selected text to a server or third party. The developer does not collect data through the extension.</p>
+
+    <h2>Contact</h2>
+    <p>For questions about this policy or TabQR, contact the publisher through the <a href="https://github.com/CryberCorp">CryberCorp GitHub profile</a>.</p>
+
+    <footer>
+      <p>This policy applies to the TabQR Chrome extension. This page is hosted by GitHub Pages; see <a href="https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement">GitHub’s privacy statement</a> for information about data processed when visiting the site.</p>
+    </footer>
+  </main>
+</body>
+</html>
