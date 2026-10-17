@@ -1,6 +1,5 @@
 // Builds the published site from src/ into dist/ (never edit dist/ by hand):
-//   npm run build
-//   npm run build -- --publish  (also syncs generated files to the Pages root)
+//   npm run build        (or: node scripts/build.mjs)
 //
 // - src/index.html is the template: one page per language is generated from it
 //   and src/assets/js/translations.js (dist/index.html in English, dist/fr/…),
@@ -9,9 +8,9 @@
 // - ?v= on local CSS/JS set from their content, so browsers never keep an
 //   outdated file;
 // - the offline file list and cache version in dist/sw.js;
-// - every other file of src/ is copied as is;
-// - --publish copies the generated site files to the repository root for
-//   GitHub Pages branch deployments.
+// - every other file of src/ is copied as is.
+// GitHub Actions (.github/workflows/deploy.yml) runs this build and publishes
+// dist/ on every push: generated files are never committed.
 
 import { createHash } from "node:crypto";
 import { cpSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -269,10 +268,3 @@ writeFileSync(join(distDir, "sw.js"), replaceBlock(read("sw.js"), "// build:prec
 ]));
 
 console.log(`Built ${pages.length} language pages, sitemap.xml and sw.js (${urls.length} offline files, version ${version}).`);
-
-if (process.argv.includes("--publish")) {
-  for (const entry of readdirSync(distDir)) {
-    cpSync(join(distDir, entry), join(projectDir, entry), { recursive: true, force: true });
-  }
-  console.log("Synced the generated site to the GitHub Pages repository root.");
-}

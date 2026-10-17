@@ -96,18 +96,18 @@ Le menu des langues du pied de page, les balises `hreflang` et le sitemap se met
 
 ## Publier sur GitHub Pages
 
-GitHub Pages publie depuis la racine de la branche `main`. Pour chaque publication, générer le site dans `dist/` et synchroniser les fichiers statiques publiés à la racine :
+Le workflow `.github/workflows/deploy.yml` génère `dist/` et le publie sur GitHub Pages à chaque push sur `main` (ou à la demande depuis l’onglet **Actions**). Réglage GitHub requis : **Settings → Pages → Source : GitHub Actions** (déjà fait). Les fichiers générés ne sont jamais commités : la racine du dépôt ne contient que les sources.
 
 ```powershell
-npm run build -- --publish
+npm run dev          # vérifier en local
 git status
-git add -A
+git add <fichiers modifiés dans src/, scripts/…>
 git diff --cached --check
 git commit -m "Describe the site update"
 git push origin main
 ```
 
-Le push déclenche GitHub Pages. Vérifier que le déploiement est terminé, puis ouvrir les URL publiées. Ne pas basculer le dépôt en privé : le site public et la fiche du Chrome Web Store en dépendent.
+Suivre la publication dans l’onglet **Actions** du dépôt, puis ouvrir les URL publiées. Ne pas basculer le dépôt en privé : le site public et la fiche du Chrome Web Store en dépendent.
 
 Adresses publiées :
 
