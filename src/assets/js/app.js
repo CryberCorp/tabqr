@@ -1,88 +1,3 @@
-const translations = {
-  en: {
-    title: "TabQR — QR Code Generator",
-    description: "Create and customize QR codes in your browser with TabQR. Free, private and processed locally.",
-    eyebrow: "QR CODE GENERATOR",
-    titleLine1: "Create a QR code.",
-    titleLine2: "Keep it simple.",
-    intro: "Turn a link or any text into a QR code. Customize it and download it in the format you need.",
-    contentLabel: "Content",
-    contentPlaceholder: "Paste a link or type any text…",
-    pasteContent: "Paste from clipboard",
-    copyContent: "Copy content",
-    clearContent: "Clear",
-    cleared: "Content cleared.",
-    qrColor: "QR color",
-    background: "Background",
-    format: "Format",
-    yourQr: "Your QR code",
-    ready: "LOCAL",
-    emptyState: "Enter content to create your QR code.",
-    localNote: "Generated in your browser, without ever sending your content to a server.",
-    download: "Download QR code",
-    extensionPrivacy: "Extension privacy",
-    storeComingSoon: "Coming soon",
-    storeLabel: "Chrome Web Store — coming soon",
-    footerNote: "QR codes, made easy.",
-    copied: "Content copied.",
-    copyError: "Could not copy the content.",
-    pasteReading: "Reading clipboard…",
-    pasted: "Content pasted from clipboard.",
-    pasteEmpty: "Your clipboard is empty.",
-    pasteError: "Could not read the clipboard. Allow clipboard access and try again.",
-    generated: "Your QR code is ready.",
-    generatedUrl: "Website detected: scanning will open this link.",
-    generatedEmail: "Email address detected: scanning will start a new email.",
-    generatedPhone: "Phone number detected: scanning will call this number.",
-    inputRequired: "Enter some text or a link to create a QR code.",
-    qrError: "This content could not be encoded. Try using less text.",
-    downloadSuccess: "QR code downloaded.",
-    downloadError: "The selected image format is not supported by this browser.",
-    qrPreview: "Generated QR code",
-  },
-  fr: {
-    title: "TabQR — Générateur de QR code",
-    description: "Créez et personnalisez des QR codes dans votre navigateur avec TabQR. Gratuit, privé et traité localement.",
-    eyebrow: "GÉNÉRATEUR DE QR CODE",
-    titleLine1: "Créez vos QR codes.",
-    titleLine2: "En toute simplicité.",
-    intro: "Transformez un lien ou un texte en QR code. Personnalisez-le et téléchargez-le au format souhaité.",
-    contentLabel: "Contenu",
-    contentPlaceholder: "Collez un lien ou saisissez du texte…",
-    pasteContent: "Coller depuis le presse-papiers",
-    copyContent: "Copier le contenu",
-    clearContent: "Effacer",
-    cleared: "Contenu effacé.",
-    qrColor: "Couleur du QR",
-    background: "Arrière-plan",
-    format: "Format",
-    yourQr: "Votre QR code",
-    ready: "LOCAL",
-    emptyState: "Saisissez du contenu pour créer votre QR code.",
-    localNote: "Généré dans votre navigateur, sans jamais envoyer votre contenu à un serveur.",
-    download: "Télécharger le QR code",
-    extensionPrivacy: "Confidentialité de l’extension",
-    storeComingSoon: "Bientôt",
-    storeLabel: "Chrome Web Store — bientôt disponible",
-    footerNote: "Les QR codes en toute simplicité.",
-    copied: "Contenu copié.",
-    copyError: "Impossible de copier le contenu.",
-    pasteReading: "Lecture du presse-papiers…",
-    pasted: "Contenu collé depuis le presse-papiers.",
-    pasteEmpty: "Le presse-papiers est vide.",
-    pasteError: "Impossible de lire le presse-papiers. Autorisez son accès puis réessayez.",
-    generated: "Votre QR code est prêt.",
-    generatedUrl: "Site web détecté : le scan ouvrira ce lien.",
-    generatedEmail: "Adresse e-mail détectée : le scan ouvrira un nouvel e-mail.",
-    generatedPhone: "Numéro de téléphone détecté : le scan appellera ce numéro.",
-    inputRequired: "Saisissez du texte ou un lien pour créer un QR code.",
-    qrError: "Ce contenu n’a pas pu être encodé. Essayez avec moins de texte.",
-    downloadSuccess: "QR code téléchargé.",
-    downloadError: "Ce format d’image n’est pas pris en charge par ce navigateur.",
-    qrPreview: "QR code généré",
-  },
-};
-
 const contentInput = document.querySelector("#qr-content");
 const previewCanvas = document.querySelector("#qr-preview");
 const previewContext = previewCanvas.getContext("2d");
@@ -95,87 +10,24 @@ const downloadButton = document.querySelector("#download-qr");
 const copyButton = document.querySelector("#copy-content");
 const pasteButton = document.querySelector("#paste-content");
 const clearButton = document.querySelector("#clear-content");
+const languageMenu = document.querySelector(".language-menu");
+const installButton = document.querySelector("#install-app");
+const installDialog = document.querySelector("#install-dialog");
+const languageNotice = document.querySelector("#language-notice");
+let installPrompt = null;
 let qrMatrix = null;
 let qrKind = "text";
 let updateTimer = 0;
 const defaultLanguage = "en";
-const languageKey = "tabqr-language";
-const rtlLanguages = new Set(["ar", "fa", "he", "ur"]);
-const supportedLanguages = Object.keys(translations);
-let currentLanguage = defaultLanguage;
+// Each language has its own static page; its <html> says which one it is.
+const currentLanguage = translations[document.documentElement.lang] ? document.documentElement.lang : defaultLanguage;
+const siteRoot = document.documentElement.dataset.root ?? "./";
 
 // Missing keys fall back to English, then to the key itself.
-function t(key) {
-  return translations[currentLanguage]?.[key] ?? translations[defaultLanguage][key] ?? key;
-}
-
-// Matches "pt-BR" / "pt_BR" to "pt-BR", then "pt", among supported languages.
-function matchLanguage(code) {
-  if (typeof code !== "string" || !code) {
-    return null;
-  }
-  const normalized = code.replace("_", "-").toLowerCase();
-  const base = normalized.split("-")[0];
-  return supportedLanguages.find((language) => language.toLowerCase() === normalized)
-    ?? supportedLanguages.find((language) => language.toLowerCase() === base)
-    ?? null;
-}
-
-function detectLanguage() {
-  let saved = null;
-  try {
-    saved = window.localStorage.getItem(languageKey);
-  } catch {
-    // Storage unavailable: use the browser languages.
-  }
-  const candidates = [saved, ...(navigator.languages ?? []), navigator.language];
-  for (const candidate of candidates) {
-    const language = matchLanguage(candidate);
-    if (language) {
-      return language;
-    }
-  }
-  return defaultLanguage;
-}
-
-function saveLanguage(language) {
-  try {
-    window.localStorage.setItem(languageKey, language);
-  } catch {
-    // Storage may be unavailable (private mode, blocked site data).
-  }
-}
-
-function buildLanguageSwitch() {
-  const languageSwitch = document.querySelector(".language-switch");
-  languageSwitch.replaceChildren(...supportedLanguages.map((language) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.dataset.language = language;
-    button.textContent = language.toUpperCase();
-    try {
-      const displayNames = new Intl.DisplayNames([language], { type: "language" });
-      button.title = displayNames.of(language);
-      button.lang = language;
-    } catch {
-      // Intl.DisplayNames unsupported: keep the code only.
-    }
-    button.addEventListener("click", () => {
-      saveLanguage(language);
-      translatePage(language);
-    });
-    return button;
-  }));
-}
-
-const nonbreakingWordPatterns = {
-  en: /(^|[^\p{L}])(a|an|the|and|or|of|to|in|on|at|by|for|as|you)\s+(?=\p{L})/giu,
-  fr: /(^|[^\p{L}])(a|à|y|de|du|des|le|la|les|un|une|et|ou|en|au|aux|ce|ces)\s+(?=\p{L})/giu,
-};
-
-function keepShortWordsWithNext(text, language) {
-  const pattern = nonbreakingWordPatterns[language];
-  return pattern ? text.replace(pattern, "$1$2\u00a0") : text;
+// Texts get non-breaking spaces so short words never end a line.
+function t(key, language = currentLanguage) {
+  const text = translations[language]?.[key] ?? translations[defaultLanguage][key] ?? key;
+  return typeset(text, language);
 }
 
 const preferencesKey = "tabqr-preferences";
@@ -270,37 +122,6 @@ function savePreferences() {
     }));
   } catch {
     // Storage may be unavailable (private mode, blocked site data).
-  }
-}
-
-function translatePage(language) {
-  currentLanguage = matchLanguage(language) ?? defaultLanguage;
-  document.documentElement.lang = currentLanguage;
-  document.documentElement.dir = rtlLanguages.has(currentLanguage.split("-")[0]) ? "rtl" : "ltr";
-  document.title = t("title");
-  document.querySelector('meta[name="description"]').content = t("description");
-
-  document.querySelectorAll("[data-i18n]").forEach((element) => {
-    const key = element.dataset.i18n;
-    const text = t(key);
-    element.textContent = key === "intro" ? keepShortWordsWithNext(text, currentLanguage) : text;
-  });
-  document.querySelectorAll("[data-i18n-placeholder]").forEach((element) => {
-    element.placeholder = t(element.dataset.i18nPlaceholder);
-  });
-  document.querySelectorAll("[data-i18n-aria-label]").forEach((element) => {
-    element.setAttribute("aria-label", t(element.dataset.i18nAriaLabel));
-  });
-  previewCanvas.setAttribute("aria-label", t("qrPreview"));
-
-  document.querySelectorAll("[data-language]").forEach((button) => {
-    button.setAttribute("aria-pressed", String(button.dataset.language === currentLanguage));
-  });
-
-  if (qrMatrix) {
-    status.textContent = generatedMessage();
-  } else if (!contentInput.value.trim()) {
-    status.textContent = t("inputRequired");
   }
 }
 
@@ -414,6 +235,69 @@ colorInput.addEventListener("change", savePreferences);
 backgroundInput.addEventListener("change", savePreferences);
 formatInput.addEventListener("change", savePreferences);
 
+function openLanguage(language) {
+  const url = TabQRLanguage.urlFor(language);
+  if (url) {
+    TabQRLanguage.save(language);
+    window.location.href = url;
+  }
+}
+
+// Language menu: remember the choice so the root page opens in it next time.
+languageMenu.querySelectorAll("a[hreflang]").forEach((link) => {
+  link.addEventListener("click", () => TabQRLanguage.save(link.hreflang));
+});
+
+// Footer menus ("More", languages): one open at a time; a click outside or
+// Escape closes them.
+const footerMenus = [...document.querySelectorAll(".footer-menu")];
+for (const menu of footerMenus) {
+  menu.addEventListener("toggle", () => {
+    if (menu.open) {
+      footerMenus.filter((other) => other !== menu).forEach((other) => { other.open = false; });
+    }
+  });
+}
+document.addEventListener("click", (event) => {
+  footerMenus
+    .filter((menu) => menu.open && !menu.contains(event.target))
+    .forEach((menu) => { menu.open = false; });
+});
+document.addEventListener("keydown", (event) => {
+  const openMenu = footerMenus.find((menu) => menu.open);
+  if (event.key === "Escape" && openMenu) {
+    openMenu.open = false;
+    openMenu.querySelector("summary").focus();
+  }
+});
+
+// First visit on the root page: suggest the browser's language, in that
+// language, instead of redirecting (see language.js). Closing it keeps English.
+function suggestLanguage() {
+  const language = TabQRLanguage.browserLanguage();
+  if (!TabQRLanguage.isRoot || TabQRLanguage.saved() || !language || language === currentLanguage) {
+    return;
+  }
+  const text = languageNotice.querySelector("#language-notice-text");
+  const link = languageNotice.querySelector("#language-notice-link");
+  const close = languageNotice.querySelector("#language-notice-close");
+  languageNotice.lang = language;
+  languageNotice.dir = /^(ar|fa|he|ur)\b/.test(language) ? "rtl" : "ltr";
+  text.textContent = t("languageAvailable", language);
+  link.textContent = t("languageSwitch", language);
+  link.href = TabQRLanguage.urlFor(language);
+  close.setAttribute("aria-label", t("close", language));
+  link.addEventListener("click", (event) => {
+    event.preventDefault();
+    openLanguage(language);
+  });
+  close.addEventListener("click", () => {
+    TabQRLanguage.save(currentLanguage);
+    languageNotice.hidden = true;
+  });
+  languageNotice.hidden = false;
+}
+
 pasteButton.addEventListener("click", async () => {
   pasteButton.disabled = true;
   status.classList.remove("is-error");
@@ -522,8 +406,130 @@ downloadButton.addEventListener("click", async () => {
   }
 });
 
+// "Install extension" button: only on desktop Google Chrome, Microsoft Edge
+// and Brave, which install Chrome Web Store extensions in one or two clicks
+// (Edge asks once to allow other stores). Opera needs an extra add-on first,
+// and mobile browsers cannot install extensions, so they never see it.
+// Browsers without User-Agent Client Hints (Safari, Firefox) are excluded too.
+function canInstallChromeExtension() {
+  const hints = navigator.userAgentData;
+  if (!hints || hints.mobile || /Android|iOS/i.test(hints.platform)) {
+    return false;
+  }
+  const brands = hints.brands.map(({ brand }) => brand);
+  return Boolean(navigator.brave)
+    || brands.some((brand) => ["Google Chrome", "Microsoft Edge", "Brave"].includes(brand));
+}
+
+const extensionButton = document.querySelector("#install-extension");
+if (extensionButton.getAttribute("href") !== "#" && canInstallChromeExtension()) {
+  extensionButton.hidden = false;
+}
+
+// Installing the app (PWA).
+// - Browsers with a native install prompt (Chrome, Edge, Samsung Internet,
+//   Opera, Brave… on Android and desktop) fire beforeinstallprompt: the button
+//   opens that prompt directly, in one click.
+// - Everywhere else (iPhone/iPad, where Apple offers no install API in any
+//   browser; Safari on Mac; Firefox) the button opens a guide with the steps
+//   for the detected device, which the visitor can switch by hand.
+// - In-app browsers (Instagram, Facebook…) cannot install: the guide says to
+//   open the page in the real browser first.
+// - Once installed (running as an app), the button is hidden.
+const installedDisplayModes = ["standalone", "minimal-ui", "fullscreen", "window-controls-overlay"];
+const isInstalled = navigator.standalone === true
+  || installedDisplayModes.some((mode) => window.matchMedia(`(display-mode: ${mode})`).matches);
+const installTabs = [...installDialog.querySelectorAll('[role="tab"]')];
+
+function detectPlatform() {
+  const ua = navigator.userAgent;
+  if (/iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)) {
+    return "ios";
+  }
+  if (/Android/.test(ua)) {
+    return "android";
+  }
+  return /Macintosh/.test(ua) ? "mac" : "desktop";
+}
+
+function selectInstallTab(platform, focus = false) {
+  for (const tab of installTabs) {
+    const selected = tab.dataset.platform === platform;
+    tab.setAttribute("aria-selected", String(selected));
+    tab.tabIndex = selected ? 0 : -1;
+    installDialog.querySelector(`#${tab.getAttribute("aria-controls")}`).hidden = !selected;
+    if (selected && focus) {
+      tab.focus();
+    }
+  }
+}
+
+function openInstallGuide() {
+  selectInstallTab(detectPlatform());
+  installDialog.querySelector("#install-in-app").hidden = !/FBAN|FBAV|FB_IAB|Instagram|TikTok|musical_ly|Snapchat|LinkedInApp|Line\//.test(navigator.userAgent);
+  installDialog.querySelector("#install-now").hidden = !installPrompt;
+  installDialog.showModal();
+}
+
+async function promptInstall() {
+  installPrompt.prompt();
+  const { outcome } = await installPrompt.userChoice;
+  // A prompt can only be shown once; Chrome fires a new event if declined.
+  installPrompt = null;
+  installDialog.querySelector("#install-now").hidden = true;
+  if (outcome === "accepted") {
+    installButton.hidden = true;
+    installDialog.close();
+  }
+}
+
+installButton.hidden = isInstalled;
+
+window.addEventListener("beforeinstallprompt", (event) => {
+  event.preventDefault();
+  installPrompt = event;
+  installDialog.querySelector("#install-now").hidden = false;
+});
+
+window.addEventListener("appinstalled", () => {
+  installPrompt = null;
+  installButton.hidden = true;
+  installDialog.close();
+});
+
+installButton.addEventListener("click", () => (installPrompt ? promptInstall() : openInstallGuide()));
+installDialog.querySelector("#install-now").addEventListener("click", promptInstall);
+installDialog.querySelector("#install-dialog-close").addEventListener("click", () => installDialog.close());
+// A click on the backdrop (outside the dialog box) closes it.
+installDialog.addEventListener("click", (event) => {
+  if (event.target === installDialog) {
+    installDialog.close();
+  }
+});
+
+for (const tab of installTabs) {
+  tab.addEventListener("click", () => selectInstallTab(tab.dataset.platform));
+  tab.addEventListener("keydown", (event) => {
+    const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[event.key];
+    if (!step) {
+      return;
+    }
+    event.preventDefault();
+    const direction = document.documentElement.dir === "rtl" && /Left|Right/.test(event.key) ? -step : step;
+    const next = installTabs[(installTabs.indexOf(tab) + direction + installTabs.length) % installTabs.length];
+    selectInstallTab(next.dataset.platform, true);
+  });
+}
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register(`${siteRoot}sw.js`).catch(() => {
+      // Offline support is optional: the site works without it.
+    });
+  });
+}
+
+suggestLanguage();
 loadPreferences();
 loadContent();
-buildLanguageSwitch();
-translatePage(detectLanguage());
 generateQr();

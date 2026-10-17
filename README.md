@@ -1,70 +1,125 @@
 # TabQR — site web
 
-Ce dépôt contient le site statique public de TabQR : le générateur QR web et les pages de confidentialité. Il ne contient pas le code source de l’extension Chrome, qui est géré séparément.
+Site statique public de TabQR : le générateur de QR codes (33 langues, installable comme application, utilisable hors ligne) et les pages de confidentialité de l’extension Chrome. Le code de l’extension est dans un dépôt séparé.
 
-## Pages publiées
+Les tâches en attente sont dans [TODO.md](TODO.md).
 
-- Application web : <https://crybercorp.github.io/tabqr/>
-- Politique de confidentialité en anglais : <https://crybercorp.github.io/tabqr/privacy-policy/>
-- Politique de confidentialité en français : <https://crybercorp.github.io/tabqr/privacy-policy/fr/>
-
-L’URL anglaise de la politique est actuellement enregistrée dans le Chrome Web Store. **Ne pas déplacer ni renommer `privacy-policy/`** avant d’avoir mis à jour cette URL dans la fiche de l’extension.
-
-## Structure du dépôt
+## Organisation
 
 ```text
-index.html                      Application web et navigation
-app.css                         Styles et mise en page responsive
-app.js                          Génération QR, contrôles et traductions EN/FR
-assets/
-  chrome-web-store.svg          Icône du futur lien vers la fiche Chrome Web Store
-  fonts/Doto-Black.ttf          Police des titres TabQR
-  scripts/qrcode-generator.js   Générateur QR embarqué localement
-  tabqr-icon.svg                Logo TabQR
-privacy-policy/
-  index.html                    Politique anglaise (URL principale)
-  fr/index.html                 Politique française
-  en/index.html                 Ancien chemin anglais, conservé comme redirection
-.nojekyll                       Publie les fichiers statiques sans traitement Jekyll
+src/                          Sources du site : tout ce qui se modifie
+  index.html                  Modèle de toutes les pages de langue
+  assets/
+    css/app.css               Styles et mise en page responsive
+    js/app.js                 Génération QR, contrôles, préférences, installation de l’app
+    js/language.js            Choix de la langue (chargé dans <head>, avant l’affichage)
+    js/translations.js        Textes des 33 langues + règles typographiques
+    js/vendor/                Bibliothèque QR tierce, embarquée telle quelle
+    fonts/  icons/  images/   Police, icônes de l’app installée, logos
+  privacy-policy/             Politiques de confidentialité (pages écrites à la main)
+  manifest.webmanifest        Description de l’application installable (PWA)
+  sw.js                       Service worker (hors ligne) ; sa liste de fichiers est générée
+  google96bb0ab2759d810e.html Vérification Google Search Console : ne pas supprimer ni renommer
+scripts/
+  build.mjs                   Génère le site publié : src/ → dist/
+  serve.mjs                   Aperçu local de dist/
+  watch.mjs                   Régénère dist/ à chaque modification de src/
+.github/workflows/deploy.yml  Génère et publie le site à chaque push sur main
+.vscode/settings.json         Live Server sert dist/ (et non le modèle de src/)
+dist/                         Site généré : jamais versionné, jamais modifié à la main
+package.json                  Commandes npm (aucune dépendance)
 ```
 
-Le site est autonome : il n’a pas d’étape de compilation ni de dépendance à installer. Le générateur QR et les ressources nécessaires sont servis depuis ce dépôt ; le contenu saisi est traité dans le navigateur.
+Aucune dépendance à installer : seul Node.js 20 ou plus récent est nécessaire.
 
-## Modifier et prévisualiser
+## Commandes
 
-1. Modifier le fichier concerné. Les textes EN/FR de l’application se trouvent dans les dictionnaires au début de `app.js`. La phrase d’introduction lie automatiquement certains mots courts à ceux qui suivent pour éviter qu’ils restent seuls en fin de ligne ; `text-wrap: pretty` améliore aussi la composition selon la largeur disponible.
-2. Prévisualiser le site à la racine du dépôt avec un serveur statique (par exemple l’extension **Live Server** de VS Code, ou `python -m http.server 8000`).
-3. Vérifier les deux langues, la génération du QR, le collage/copiage, les exports PNG/WebP/JPEG/SVG et l’affichage mobile. Pour PC et tablette, vérifier notamment que la composition reste centrée et tient sans défilement aux tailles d’écran usuelles.
-4. Exécuter `node --check app.js`, puis `git diff --check`.
-5. Vérifier `git status` et ne sélectionner que les fichiers prévus pour la modification.
+```powershell
+npm run dev      # aperçu sur http://localhost:8080/, régénéré à chaque modification de src/
+npm run watch    # régénère dist/ à chaque modification de src/ (à utiliser avec Live Server)
+npm run build    # génère dist/ une fois
+npm run serve    # sert le dernier dist/ généré
+```
 
-Si le CSS ou le JavaScript reste en cache après une modification, augmenter le numéro de version dans les URL de ressources de `index.html` (par exemple passer `app.css?v=7` à `app.css?v=8`) afin de forcer le navigateur à récupérer le nouveau fichier.
+**Toujours prévisualiser `dist/`, jamais `src/index.html`** : ce fichier n’est que le modèle, sans la liste des langues ni les balises SEO. Avec l’extension VS Code **Live Server**, le réglage du projet (`.vscode/settings.json`) sert déjà `dist/` : lancer `npm run watch` dans un terminal, puis **Go Live**.
+
+`npm run build` produit dans `dist/` :
+
+- une page par langue à partir de `src/index.html` et `src/assets/js/translations.js` : anglais à la racine, puis `fr/`, `de/`, `ja/`, `pt-br/`… ;
+- `sitemap.xml` ;
+- `sw.js` avec la liste des fichiers hors ligne et une version de cache calculée sur leur contenu ;
+- les `?v=` des fichiers CSS et JS, calculés eux aussi sur leur contenu : les navigateurs ne gardent jamais une ancienne version ;
+- une copie de tous les autres fichiers de `src/`.
+
+## Modifier le site
+
+1. Modifier les sources dans `src/` :
+   - mise en page ou nouveaux éléments : `src/index.html` (les textes visibles portent un attribut `data-i18n="clé"`) ;
+   - textes : `src/assets/js/translations.js`, une entrée par langue ; une clé absente d’une langue s’affiche en anglais ;
+   - styles et comportement : `src/assets/css/app.css`, `src/assets/js/app.js`.
+2. `npm run dev`, puis vérifier dans le navigateur : la page anglaise et quelques langues (dont l’arabe, écrit de droite à gauche), la génération du QR, le copier/coller, les exports PNG/WebP/JPEG/SVG, l’affichage mobile.
+3. `git diff --check`, `git status`, commit, push : le site se publie seul (voir plus bas).
+
+### Ajouter ou retirer une langue
+
+1. Ajouter (ou retirer) son entrée dans `src/assets/js/translations.js`, avec son code (`it`, `pt-BR`…) et toutes les clés de `en`.
+2. Pour une langue écrite de droite à gauche, vérifier qu’elle figure dans `rtlLanguages` (`scripts/build.mjs`).
+3. Pour la typographie, ajouter si besoin ses mots courts dans `shortWords` (`translations.js`).
+4. `npm run dev`.
+
+Le menu des langues du pied de page, les balises `hreflang` et le sitemap se mettent à jour seuls.
+
+## Langues et référencement (SEO)
+
+- **Une adresse par langue**, avec un contenu entièrement traduit (titre, description, textes, libellés d’accessibilité) : Google indexe chaque version séparément, sans les considérer comme des doublons.
+- **Canonical vers soi-même** sur chaque page, et **`hreflang` réciproques** vers les 33 langues plus `x-default` (la page anglaise), dans le `<head>` et dans `sitemap.xml`.
+- **Liens de langue explorables** : le menu des langues du pied de page est fait de vrais liens `<a hreflang>`, que les visiteurs comme les moteurs de recherche peuvent suivre. Le choix d’un visiteur y est mémorisé.
+- **Pas de redirection selon la langue supposée** (règle Google pour les sites multilingues) : la racine ne redirige que si le visiteur a lui-même choisi une langue. Sinon, un bandeau rédigé dans la langue de son navigateur lui propose sa version. Les pages de langue ne redirigent jamais.
+- **Open Graph** (partage sur les réseaux sociaux) et **données structurées** `WebApplication` sur chaque page.
+
+### Google Search Console
+
+- Propriété de type « préfixe d’URL » (`https://crybercorp.github.io/tabqr/`), vérifiée par le fichier `src/google96bb0ab2759d810e.html`. Une propriété « domaine » demande l’accès DNS du domaine, impossible sur `github.io` ; elle deviendra possible avec un nom de domaine personnalisé.
+- Le sitemap se déclare dans **Sitemaps** : `sitemap.xml`. Il ne peut pas être annoncé par un `robots.txt`, qui devrait se trouver à la racine du domaine `crybercorp.github.io`, hors de ce dépôt.
+
+## Application installable et hors ligne (PWA)
+
+- Le bouton **Installer l’app** de l’en-tête choisit la meilleure méthode :
+  - navigateurs avec invite d’installation native (Chrome, Edge, Samsung Internet, Opera, Brave… sur Android et ordinateur) : l’invite s’ouvre directement, en un clic ;
+  - ailleurs (iPhone et iPad, où Apple ne fournit aucune API d’installation, quel que soit le navigateur ; Safari sur Mac ; Firefox) : une fenêtre explique les étapes. L’appareil est détecté automatiquement, et des onglets (iPhone · iPad, Android, Mac, Windows · Linux · ChromeOS) permettent d’en choisir un autre ;
+  - navigateurs intégrés aux applications (Instagram, Facebook, TikTok…), qui ne peuvent pas installer : la fenêtre demande d’ouvrir la page dans le vrai navigateur ;
+  - application déjà installée : le bouton est masqué.
+- Les étapes affichées sont dans `translations.js` (clés `install…`). Les libellés des menus des navigateurs y sont traduits au plus près ; à revoir si un navigateur les renomme.
+- Après la première visite, toutes les pages et ressources fonctionnent sans connexion. Chaque génération change la version du cache si un fichier a changé ; les visiteurs reçoivent la mise à jour à leur visite suivante.
+- Les icônes PNG de `src/assets/icons/` reprennent `src/assets/images/tabqr-icon.svg`. Si le logo change, les régénérer aux mêmes tailles (192, 512, 512 « maskable » avec marge, 180 pour iOS).
 
 ## Publier sur GitHub Pages
 
-GitHub Pages est configuré pour publier la branche `main` depuis la racine de ce dépôt. Un push accepté sur `main` lance la publication ; aucune commande de build locale ou action manuelle de déploiement n’est requise.
+Le workflow `.github/workflows/deploy.yml` génère `dist/` et le publie à chaque push sur `main` (ou à la demande depuis l’onglet **Actions**). Réglage requis, une seule fois : **GitHub → CryberCorp/tabqr → Settings → Pages → Source : GitHub Actions**.
 
 ```powershell
+npm run build
 git status
-git add index.html app.css app.js README.md
+git add <fichiers modifiés>
 git diff --cached --check
 git commit -m "Describe the site update"
 git push origin main
 ```
 
-Adapter la liste de `git add` aux seuls fichiers modifiés et voulus : éviter `git add .` si d’autres changements locaux sont présents. Après le push, vérifier l’état du déploiement dans **GitHub → CryberCorp/tabqr → Settings → Pages** ou dans la section des déploiements du dépôt, puis ouvrir les URL publiées et contrôler les ressources principales. Un changement de contenu peut mettre un court délai à apparaître dans le navigateur à cause du cache.
+Suivre la publication dans l’onglet **Actions** du dépôt, puis ouvrir les URL publiées. Ne pas basculer le dépôt en privé : le site public et la fiche du Chrome Web Store en dépendent.
 
-La source Pages doit rester `main` et `/` (racine). Ne pas basculer ce dépôt en privé : le site Pages public et la fiche du Chrome Web Store en dépendent.
+Adresses publiées :
+
+- Application : <https://crybercorp.github.io/tabqr/> (anglais), `…/fr/`, `…/de/`, etc.
+- Sitemap : <https://crybercorp.github.io/tabqr/sitemap.xml>
+- Politique de confidentialité : <https://crybercorp.github.io/tabqr/privacy-policy/> (anglais) et `…/privacy-policy/fr/`
+
+L’URL anglaise de la politique est enregistrée dans le Chrome Web Store. **Ne pas déplacer ni renommer `src/privacy-policy/`** avant d’avoir mis à jour cette URL dans la fiche de l’extension.
 
 ## Fiche Chrome Web Store
 
-Le pied de page contient :
-
-- un lien vers la politique de confidentialité de l’extension ;
-- une icône Chrome Web Store et une mention « Coming soon / Bientôt », sans lien inactif.
-
-Quand la fiche de l’extension sera publiée, remplacer le bloc `.store-placeholder` dans `index.html` par un lien `<a>` vers son URL officielle. Garder ce lien distinct du lien de confidentialité.
+L’adresse de la fiche se renseigne à un seul endroit : `chromeWebStoreUrl` en haut de `scripts/build.mjs`. Tant qu’elle est vide, le bouton de l’en-tête et le lien du pied de page restent masqués. Une fois l’adresse saisie et le site publié, le lien du pied de page apparaît dans toutes les langues, et le bouton **Installer l’extension** apparaît à côté de **Installer l’app**, uniquement sur ordinateur avec Google Chrome, Microsoft Edge ou Brave : ces navigateurs installent les extensions du Chrome Web Store en un ou deux clics. Opera (module supplémentaire requis), Safari, Firefox et les mobiles ne le voient pas.
 
 ## Dépôt de l’extension
 
-Le code de l’extension et sa publication dans le Chrome Web Store suivent leur propre cycle dans un dépôt séparé. Ne pas copier ici les sources privées de l’extension, ses clés, jetons ou fichiers de publication. Les changements du site n’impliquent pas une nouvelle version de l’extension ; inversement, une mise à jour de l’extension ne déplace pas automatiquement les pages de confidentialité.
+Le code de l’extension et sa publication dans le Chrome Web Store suivent leur propre cycle dans un dépôt séparé. Ne pas copier ici ses sources privées, clés, jetons ou fichiers de publication.

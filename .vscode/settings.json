@@ -1,0 +1,7 @@
+{
+  // Live Server must show the generated site: src/index.html is only the
+  // template (its language list and SEO tags are filled in by the build).
+  // Keep `npm run watch` running so dist/ follows every edit in src/.
+  "liveServer.settings.root": "/dist",
+  "liveServer.settings.file": "index.html"
+}

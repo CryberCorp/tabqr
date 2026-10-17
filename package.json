@@ -1,0 +1,15 @@
+{
+  "name": "tabqr-website",
+  "private": true,
+  "description": "TabQR public website: multilingual QR code generator (PWA) and extension privacy policy.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "serve": "node scripts/serve.mjs",
+    "watch": "node scripts/watch.mjs",
+    "dev": "node scripts/serve.mjs --watch"
+  }
+}
