@@ -8,6 +8,7 @@ const backgroundInput = document.querySelector("#qr-background");
 const formatInput = document.querySelector("#qr-format");
 const downloadButton = document.querySelector("#download-qr");
 const copyButton = document.querySelector("#copy-content");
+const readyDot = document.querySelector(".ready-badge .privacy-dot");
 const pasteButton = document.querySelector("#paste-content");
 const clearButton = document.querySelector("#clear-content");
 const languageMenu = document.querySelector(".language-menu");
@@ -163,6 +164,35 @@ function setError(message) {
   downloadButton.disabled = true;
 }
 
+// A new code is drawn in a few steps, top to bottom, and the LOCAL light
+// blinks. Not while typing: only when the content changed after a pause.
+let lastGenerated = 0;
+function revealQr() {
+  const now = performance.now();
+  const paused = now - lastGenerated > 600;
+  lastGenerated = now;
+  if (!paused) {
+    return;
+  }
+  for (const element of [previewCanvas, readyDot]) {
+    element.classList.remove("is-revealing");
+    void element.offsetWidth;
+    element.classList.add("is-revealing");
+  }
+}
+
+// Briefly swaps a button's icon for a check mark once its action succeeded.
+const checkIcon = '<path d="M5 12.5l4.5 4.5L19 7.5"/>';
+function confirmAction(button) {
+  const icon = button.querySelector("svg");
+  icon.dataset.icon ??= icon.innerHTML;
+  icon.innerHTML = checkIcon;
+  window.clearTimeout(button.confirmTimer);
+  button.confirmTimer = window.setTimeout(() => {
+    icon.innerHTML = icon.dataset.icon;
+  }, 1200);
+}
+
 function generateQr() {
   const value = contentInput.value.trim();
   status.classList.remove("is-error");
@@ -186,6 +216,7 @@ function generateQr() {
     renderPreview();
     previewCanvas.hidden = false;
     emptyState.hidden = true;
+    revealQr();
     status.textContent = generatedMessage();
     downloadButton.disabled = false;
   } catch {
@@ -347,6 +378,7 @@ copyButton.addEventListener("click", async () => {
     await navigator.clipboard.writeText(contentInput.value);
     status.textContent = t("copied");
     status.classList.remove("is-error");
+    confirmAction(copyButton);
   } catch (error) {
     status.textContent = `${t("copyError")} ${error instanceof Error ? error.message : ""}`.trim();
     status.classList.add("is-error");
@@ -395,6 +427,7 @@ downloadButton.addEventListener("click", async () => {
     anchor.download = `tabqr-code.${format}`;
     anchor.click();
     status.textContent = t("downloadSuccess");
+    confirmAction(downloadButton);
   } catch (error) {
     status.textContent = `${t("downloadError")} ${error instanceof Error ? error.message : ""}`.trim();
     status.classList.add("is-error");

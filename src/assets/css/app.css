@@ -968,11 +968,66 @@ h1 {
   text-decoration-thickness: 1px;
 }
 
+/* Motion: short and stepped, like a pixel screen, never smooth or bouncy. */
+
+/* Buttons sink by one pixel while pressed, like a key. */
+.secondary-button:active,
+.primary-button:active:not(:disabled) {
+  transform: translate(1px, 1px);
+}
+
+/* A new QR code is drawn top to bottom in 8 steps. */
+@keyframes qr-reveal {
+  from {
+    clip-path: inset(0 0 100% 0);
+  }
+
+  to {
+    clip-path: inset(0);
+  }
+}
+
+#qr-preview.is-revealing {
+  animation: qr-reveal 240ms steps(8, end);
+}
+
+/* The LOCAL light blinks twice when a new code is ready. */
+@keyframes light-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.ready-badge .privacy-dot.is-revealing {
+  animation: light-blink 300ms steps(1, end) 2;
+}
+
+/* Footer menus unfold upward in 3 steps. */
+@keyframes menu-unfold {
+  from {
+    clip-path: inset(100% -6px -6px -6px);
+  }
+
+  to {
+    clip-path: inset(0 -6px -6px -6px);
+  }
+}
+
+.footer-menu[open] .footer-menu-panel {
+  animation: menu-unfold 120ms steps(3, end);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+    animation: none !important;
+  }
+
+  .secondary-button:active,
+  .primary-button:active {
+    transform: none;
   }
 }
