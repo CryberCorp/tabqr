@@ -281,7 +281,7 @@ export function buildArticles(options) {
         },
       ],
       body: `    <nav class="breadcrumb" aria-label="${escapeHtml(text.breadcrumb)}">
-      <a href="${root}${pathFor(language)}">TabQR</a> <span aria-hidden="true">›</span> <a href="../">${escapeHtml(text.guides)}</a>
+      <a href="${root}${pathFor(language)}">TabQR</a> <span aria-hidden="true">›</span> <a href="../">${escapeHtml(text.guides)}</a> <span aria-hidden="true">›</span> <span aria-current="page">${escapeHtml(typeset(article.title, language))}</span>
     </nav>
     <article>
       <h1>${escapeHtml(typeset(article.title, language))}</h1>
@@ -361,9 +361,13 @@ export function buildPages(options) {
       .filter((other) => other.key === entry.key)
       .sort((a, b) => r.languageOrder(a.language, b.language))
       .map((other) => [other.language, `${siteUrl}${pathOf(other)}`]);
-    const updated = entry.updated
-      ? `\n    <p class="updated">${escapeHtml(typeset(text.lastUpdated(r.dateText(entry.updated, language)), language))}</p>`
-      : "";
+    // Same layout as the guides: breadcrumb, title, date · reading time, text.
+    const root = "../".repeat(path.split("/").filter(Boolean).length);
+    const content = r.markdown(entry.body, language, path);
+    const meta = [
+      entry.updated ? `<time datetime="${entry.updated}">${escapeHtml(typeset(text.lastUpdated(r.dateText(entry.updated, language)), language))}</time>` : "",
+      escapeHtml(text.readingTime(readingMinutes(content))),
+    ].filter(Boolean).join(" · ");
     const note = entry.note
       ? `\n    <div class="page-note">\n      <p>${r.inlineMarkdown(entry.note, language, path)}</p>\n    </div>`
       : "";
@@ -375,20 +379,36 @@ export function buildPages(options) {
       description: entry.description,
       alternates,
       ogType: "website",
-      mainClass: "content-page",
-      structuredData: {
-        "@context": "https://schema.org",
-        "@type": "WebPage",
-        name: entry.title,
-        description: entry.description,
-        inLanguage: language,
-        url: `${siteUrl}${path}`,
-        ...(entry.updated ? { dateModified: entry.updated } : {}),
-      },
-      body: `    <h1>${escapeHtml(typeset(entry.title, language))}</h1>${updated}
-    <div class="prose">
-${r.markdown(entry.body, language, path)}
-    </div>${note}`,
+      mainClass: "article-page",
+      structuredData: [
+        {
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          name: entry.title,
+          description: entry.description,
+          inLanguage: language,
+          url: `${siteUrl}${path}`,
+          ...(entry.updated ? { dateModified: entry.updated } : {}),
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "TabQR", item: `${siteUrl}${pathFor(language)}` },
+            { "@type": "ListItem", position: 2, name: entry.title, item: `${siteUrl}${path}` },
+          ],
+        },
+      ],
+      body: `    <nav class="breadcrumb" aria-label="${escapeHtml(text.breadcrumb)}">
+      <a href="${root}${pathFor(language)}">TabQR</a> <span aria-hidden="true">›</span> <span aria-current="page">${escapeHtml(typeset(entry.title, language))}</span>
+    </nav>
+    <article>
+      <h1>${escapeHtml(typeset(entry.title, language))}</h1>
+      <p class="updated">${meta}</p>
+      <div class="prose">
+${content}
+      </div>
+    </article>${note}`,
     }), entry.source);
     sitemapEntries.push({ loc: `${siteUrl}${path}`, alternates: r.withXDefault(alternates), lastmod: entry.updated });
   }
