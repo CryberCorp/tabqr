@@ -126,9 +126,10 @@ function savePreferences() {
   }
 }
 
-// "cells" limits the drawing to the first squares, column by column from the
-// left, for the reveal animation.
-function drawQr(context, matrix, size, foreground, background, cells = Infinity) {
+// For the reveal animation, the code is cut into a grid of equal tiles and
+// only the first "tiles" (left to right, then the next row) are shown.
+const revealGrid = 4;
+function drawQr(context, matrix, size, foreground, background, tiles = Infinity) {
   const moduleCount = matrix.getModuleCount();
   const moduleSize = Math.floor(size / (moduleCount + 8));
   const qrSize = moduleCount * moduleSize;
@@ -137,11 +138,8 @@ function drawQr(context, matrix, size, foreground, background, cells = Infinity)
   context.fillStyle = background;
   context.fillRect(0, 0, size, size);
   context.fillStyle = foreground;
-  for (let column = 0; column < moduleCount; column += 1) {
-    for (let row = 0; row < moduleCount; row += 1) {
-      if (column * moduleCount + row >= cells) {
-        return;
-      }
+  for (let row = 0; row < moduleCount; row += 1) {
+    for (let column = 0; column < moduleCount; column += 1) {
       if (matrix.isDark(row, column)) {
         context.fillRect(
           offset + column * moduleSize,
@@ -152,13 +150,24 @@ function drawQr(context, matrix, size, foreground, background, cells = Infinity)
       }
     }
   }
+
+  context.fillStyle = background;
+  const tileSize = Math.ceil(qrSize / revealGrid);
+  for (let tile = Math.max(tiles, 0); tile < revealGrid ** 2; tile += 1) {
+    context.fillRect(
+      offset + (tile % revealGrid) * tileSize,
+      offset + Math.floor(tile / revealGrid) * tileSize,
+      tileSize,
+      tileSize,
+    );
+  }
 }
 
 function renderPreview() {
   if (!qrMatrix) {
     return;
   }
-  drawQr(previewContext, qrMatrix, previewCanvas.width, colorInput.value, backgroundInput.value, revealedCells);
+  drawQr(previewContext, qrMatrix, previewCanvas.width, colorInput.value, backgroundInput.value, revealedTiles);
 }
 
 function setError(message) {
@@ -169,20 +178,20 @@ function setError(message) {
   downloadButton.disabled = true;
 }
 
-// A new code is drawn square by square, from left to right, and
-// the LOCAL light blinks. Not while typing: only when the content changed
+// A new code appears tile by tile, left to right and row by row, and the
+// LOCAL light blinks. Not while typing: only when the content changed
 // after a pause, and never when reduced motion is requested.
-const revealDuration = 600;
+const revealDuration = 640;
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 let lastGenerated = 0;
-let revealedCells = Infinity;
+let revealedTiles = Infinity;
 let revealFrame = 0;
 function revealQr() {
   const now = performance.now();
   const paused = now - lastGenerated > 600;
   lastGenerated = now;
   window.cancelAnimationFrame(revealFrame);
-  revealedCells = Infinity;
+  revealedTiles = Infinity;
   if (!paused || reducedMotion.matches) {
     renderPreview();
     return;
@@ -190,16 +199,16 @@ function revealQr() {
   readyDot.classList.remove("is-revealing");
   void readyDot.offsetWidth;
   readyDot.classList.add("is-revealing");
-  const total = qrMatrix.getModuleCount() ** 2;
+  const total = revealGrid ** 2;
   const step = (time) => {
     const progress = Math.min((time - now) / revealDuration, 1);
-    revealedCells = progress < 1 ? Math.floor(progress * total) : Infinity;
+    revealedTiles = progress < 1 ? Math.floor(progress * total) + 1 : Infinity;
     renderPreview();
     if (progress < 1) {
       revealFrame = window.requestAnimationFrame(step);
     }
   };
-  revealedCells = 0;
+  revealedTiles = 1;
   renderPreview();
   revealFrame = window.requestAnimationFrame(step);
 }
