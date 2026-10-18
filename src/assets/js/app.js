@@ -126,8 +126,8 @@ function savePreferences() {
   }
 }
 
-// "cells" limits the drawing to the first squares in reading order (left to
-// right, then the next row), for the reveal animation.
+// "cells" limits the drawing to the first squares, column by column from the
+// left, for the reveal animation.
 function drawQr(context, matrix, size, foreground, background, cells = Infinity) {
   const moduleCount = matrix.getModuleCount();
   const moduleSize = Math.floor(size / (moduleCount + 8));
@@ -137,9 +137,9 @@ function drawQr(context, matrix, size, foreground, background, cells = Infinity)
   context.fillStyle = background;
   context.fillRect(0, 0, size, size);
   context.fillStyle = foreground;
-  for (let row = 0; row < moduleCount; row += 1) {
-    for (let column = 0; column < moduleCount; column += 1) {
-      if (row * moduleCount + column >= cells) {
+  for (let column = 0; column < moduleCount; column += 1) {
+    for (let row = 0; row < moduleCount; row += 1) {
+      if (column * moduleCount + row >= cells) {
         return;
       }
       if (matrix.isDark(row, column)) {
@@ -169,10 +169,10 @@ function setError(message) {
   downloadButton.disabled = true;
 }
 
-// A new code is drawn square by square, left to right and row by row, and
+// A new code is drawn square by square, from left to right, and
 // the LOCAL light blinks. Not while typing: only when the content changed
 // after a pause, and never when reduced motion is requested.
-const revealDuration = 700;
+const revealDuration = 600;
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 let lastGenerated = 0;
 let revealedCells = Infinity;
