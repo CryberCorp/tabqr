@@ -126,6 +126,8 @@ Le menu des langues du pied de page, les balises `hreflang` et le sitemap se met
 
 - GitHub Pages fixe la durée de cache des fichiers à 10 minutes, sans réglage possible. PageSpeed le signale (« durées de mise en cache efficaces », non noté) : c’est une limite de l’hébergement, pas du site.
 - Les visites suivantes ne dépendent pas de ce cache : les `?v=` changent dès qu’un fichier change, et le service worker sert les fichiers depuis l’appareil.
+- Rien ne bloque le premier affichage : la génération intègre dans chaque page son CSS, la police Doto (réduite aux caractères utilisés, environ 2 Kio) et le petit script de langue. Les autres scripts sont chargés en différé (`defer`).
+- Les fichiers publiés sont compactés (`scripts/optimize.mjs`) : JavaScript et CSS minifiés par esbuild, HTML sans indentation. Les sources de `src/` restent lisibles.
 - Chaque page ne charge que les traductions de sa langue (environ 5 Kio compressés au lieu de 42 pour les 33 langues).
 - Pour des durées de cache longues, il faudrait un hébergement qui permet de régler les en-têtes HTTP (par exemple Cloudflare Pages, gratuit).
 

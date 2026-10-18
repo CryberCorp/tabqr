@@ -251,7 +251,9 @@ function sitemap(extraEntries = []) {
 
 // Everything the app needs offline: every language page, the files they load,
 // the files their stylesheets load (fonts) and the manifest icons.
-function offlineFiles(pages) {
+// inlined: files now carried inside every page (stylesheets, font, blocking
+// script), so they need no offline copy of their own.
+function offlineFiles(pages, inlined = []) {
   const assets = new Set();
   for (const [, url] of template.matchAll(/\s(?:href|src)="([^"]*)"/g)) {
     // Folder links are the language pages, listed separately.
@@ -259,7 +261,7 @@ function offlineFiles(pages) {
       assets.add(url);
     }
   }
-  for (const stylesheet of [...assets].filter((url) => url.split("?")[0].endsWith(".css"))) {
+  for (const stylesheet of [...assets].filter((url) => url.split("?")[0].endsWith(".css") && !inlined.includes(url.split("?")[0]))) {
     const path = stylesheet.split("?")[0];
     for (const [, url] of readDist(path).toString("utf8").matchAll(/url\(["']?([^"')]+)["']?\)/g)) {
       // Inline images (data:) and external URLs need no local file.
@@ -271,7 +273,7 @@ function offlineFiles(pages) {
   for (const icon of JSON.parse(read("manifest.webmanifest")).icons) {
     assets.add(icon.src);
   }
-  for (const url of [...assets].filter((url) => url.startsWith("assets/js/translations.js"))) {
+  for (const url of [...assets].filter((url) => url.startsWith("assets/js/translations.js") || inlined.includes(url.split("?")[0]))) {
     assets.delete(url);
   }
   for (const { path, version } of Object.values(bundles)) {
@@ -348,7 +350,7 @@ writeFileSync(join(distDir, "sitemap.xml"), sitemap([...markdownPages.sitemapEnt
 const savings = await optimize(distDir, {
   font: { ttf: "assets/fonts/Doto-Black.ttf", woff2: "assets/fonts/Doto-Black.woff2" },
 });
-const { urls, version } = offlineFiles(pages);
+const { urls, version } = offlineFiles(pages, savings.inlined);
 writeFileSync(join(distDir, "sw.js"), replaceBlock(read("sw.js"), "// build:precache", "// /build:precache", [
   `const VERSION = "${version}";`,
   "const PRECACHE = [",

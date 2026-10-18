@@ -3,10 +3,13 @@
 // - JavaScript and CSS minified by esbuild (comments, spaces, short local names);
 // - HTML: indentation and blank lines removed (never inside <pre>/<textarea>);
 // - the Doto font reduced to the characters it actually shows (titles, logo)
-//   and converted to WOFF2; the stylesheets are pointed at it.
+//   and converted to WOFF2;
+// - critical path: each page carries its stylesheet (with the font inside)
+//   and its blocking script inline, so the first render needs no other
+//   request. Deferred scripts stay separate files.
 
 import { readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { extname, join } from "node:path";
+import { extname, join, posix } from "node:path";
 import { transform } from "esbuild";
 import subsetFont from "subset-font";
 
@@ -84,13 +87,59 @@ export async function optimize(distDir, { font }) {
   rmSync(fontPath);
   const ttfName = font.ttf.split("/").at(-1);
   const woff2Name = font.woff2.split("/").at(-1);
+  // The font travels inside the stylesheets (a data URL, about 3 KiB).
+  const fontUrl = `data:font/woff2;base64,${woff2.toString("base64")}`;
+  const fontReference = new RegExp(`url\\(["']?[^"')]*(?:${ttfName}|${woff2Name})["']?\\)`, "g");
   for (const file of files.filter((name) => name.endsWith(".css"))) {
     const path = join(distDir, file);
-    const css = readFileSync(path, "utf8");
-    writeFileSync(path, css.replaceAll(ttfName, woff2Name).replace(/format\(["']?truetype["']?\)/g, 'format("woff2")'));
+    const css = readFileSync(path, "utf8")
+      .replace(/format\(["']?truetype["']?\)/g, 'format("woff2")')
+      .replace(fontReference, `url(${fontUrl})`);
+    writeFileSync(path, css);
+  }
+  rmSync(join(distDir, font.woff2), { force: true });
+
+  // Inline stylesheets and blocking (non-deferred) scripts into every page.
+  const inlined = new Set([font.woff2]);
+  const isLocalUrl = (url) => !/^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(url);
+  for (const file of files.filter((name) => name.endsWith(".html"))) {
+    const path = join(distDir, file);
+    const pageDir = posix.dirname(file);
+    const local = (href) => posix.normalize(posix.join(pageDir, href.split("?")[0]));
+    let html = readFileSync(path, "utf8");
+    html = html.replace(/<link rel="stylesheet" href="([^"]+)">/g, (match, href) => {
+      if (!isLocalUrl(href)) {
+        return match;
+      }
+      const asset = local(href);
+      const css = readFileSync(join(distDir, asset), "utf8");
+      if (/<\/style/i.test(css) || /url\((?!["']?data:)/.test(css)) {
+        throw new Error(`${asset}: cannot be inlined safely (closing tag or relative url).`);
+      }
+      inlined.add(asset);
+      return `<style>${css}</style>`;
+    });
+    html = html.replace(/<script src="([^"]+)"><\/script>/g, (match, src) => {
+      if (!isLocalUrl(src)) {
+        return match;
+      }
+      const asset = local(src);
+      const js = readFileSync(join(distDir, asset), "utf8");
+      if (/<\/script/i.test(js)) {
+        throw new Error(`${asset}: cannot be inlined safely (closing tag).`);
+      }
+      inlined.add(asset);
+      return `<script>${js}</script>`;
+    });
+    writeFileSync(path, html);
   }
 
-  return { before, after, fontBefore: ttfSize, fontAfter: woff2.length };
+  // Inlined files are no longer requested by any page: not published.
+  for (const asset of inlined) {
+    rmSync(join(distDir, asset), { force: true });
+  }
+
+  return { before, after, fontBefore: ttfSize, fontAfter: woff2.length, inlined: [...inlined] };
 }
 
 // The service worker is written last: compact it on its own.
