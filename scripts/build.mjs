@@ -29,7 +29,7 @@ import { minifyFile, optimize } from "./optimize.mjs";
 const siteUrl = "https://crybercorp.github.io/tabqr/";
 // Chrome Web Store page of the extension. Empty: the header button and the
 // footer link stay hidden. See TODO.md.
-const chromeWebStoreUrl = "";
+const chromeWebStoreUrl = "https://chromewebstore.google.com/detail/dgdhlgaeapcpdpjjaalelakkoclmapoj";
 const privacyUrls = {
   en: `${siteUrl}privacy-policy/`,
   fr: `${siteUrl}fr/privacy-policy/`,

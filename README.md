@@ -154,7 +154,7 @@ L’URL anglaise de la politique est enregistrée dans le Chrome Web Store. **Ne
 
 ## Fiche Chrome Web Store
 
-L’adresse de la fiche se renseigne à un seul endroit : `chromeWebStoreUrl` en haut de `scripts/build.mjs`. Tant qu’elle est vide, le bouton de l’en-tête et le lien du pied de page restent masqués. Une fois l’adresse saisie et le site publié, le lien du pied de page apparaît dans toutes les langues, et le bouton **Installer l’extension** apparaît à côté de **Installer l’app**, uniquement sur ordinateur avec Google Chrome, Microsoft Edge ou Brave : ces navigateurs installent les extensions du Chrome Web Store en un ou deux clics. Opera (module supplémentaire requis), Safari, Firefox et les mobiles ne le voient pas.
+Fiche publiée : <https://chromewebstore.google.com/detail/dgdhlgaeapcpdpjjaalelakkoclmapoj>. Son adresse se renseigne à un seul endroit : `chromeWebStoreUrl` en haut de `scripts/build.mjs`. Tant qu’elle est vide, le bouton de l’en-tête et le lien du pied de page restent masqués. Une fois l’adresse saisie et le site publié, le lien du pied de page apparaît dans toutes les langues, et le bouton **Installer l’extension** apparaît à côté de **Installer l’app**, uniquement sur ordinateur avec Google Chrome, Microsoft Edge ou Brave : ces navigateurs installent les extensions du Chrome Web Store en un ou deux clics. Opera (module supplémentaire requis), Safari, Firefox et les mobiles ne le voient pas.
 
 ## Dépôt de l’extension
 

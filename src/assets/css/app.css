@@ -575,13 +575,10 @@ h1 {
   min-height: 30px;
   align-items: center;
   gap: 6px;
-  color: var(--ink);
+  color: var(--muted);
   font-size: 11px;
-  font-weight: 700;
-}
-
-.footer-links a {
-  text-decoration-thickness: 1px;
+  font-weight: 400;
+  text-decoration: none;
   text-underline-offset: 3px;
 }
 
@@ -954,14 +951,11 @@ h1 {
   }
 }
 
-.footer-links a {
-  text-decoration-thickness: 1px;
-}
-
 .footer-links a:hover,
 .footer-links a:focus-visible {
   color: var(--ink);
-  text-decoration-thickness: 2px;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
 }
 
 @media (prefers-reduced-motion: reduce) {
