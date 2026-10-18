@@ -976,21 +976,6 @@ h1 {
   transform: translate(1px, 1px);
 }
 
-/* A new QR code is drawn top to bottom in 8 steps. */
-@keyframes qr-reveal {
-  from {
-    clip-path: inset(0 0 100% 0);
-  }
-
-  to {
-    clip-path: inset(0);
-  }
-}
-
-#qr-preview.is-revealing {
-  animation: qr-reveal 240ms steps(8, end);
-}
-
 /* The LOCAL light blinks twice when a new code is ready. */
 @keyframes light-blink {
   50% {

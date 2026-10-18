@@ -126,7 +126,9 @@ function savePreferences() {
   }
 }
 
-function drawQr(context, matrix, size, foreground, background) {
+// "cells" limits the drawing to the first squares in reading order (left to
+// right, then the next row), for the reveal animation.
+function drawQr(context, matrix, size, foreground, background, cells = Infinity) {
   const moduleCount = matrix.getModuleCount();
   const moduleSize = Math.floor(size / (moduleCount + 8));
   const qrSize = moduleCount * moduleSize;
@@ -137,6 +139,9 @@ function drawQr(context, matrix, size, foreground, background) {
   context.fillStyle = foreground;
   for (let row = 0; row < moduleCount; row += 1) {
     for (let column = 0; column < moduleCount; column += 1) {
+      if (row * moduleCount + column >= cells) {
+        return;
+      }
       if (matrix.isDark(row, column)) {
         context.fillRect(
           offset + column * moduleSize,
@@ -153,7 +158,7 @@ function renderPreview() {
   if (!qrMatrix) {
     return;
   }
-  drawQr(previewContext, qrMatrix, previewCanvas.width, colorInput.value, backgroundInput.value);
+  drawQr(previewContext, qrMatrix, previewCanvas.width, colorInput.value, backgroundInput.value, revealedCells);
 }
 
 function setError(message) {
@@ -164,21 +169,39 @@ function setError(message) {
   downloadButton.disabled = true;
 }
 
-// A new code is drawn in a few steps, top to bottom, and the LOCAL light
-// blinks. Not while typing: only when the content changed after a pause.
+// A new code is drawn square by square, left to right and row by row, and
+// the LOCAL light blinks. Not while typing: only when the content changed
+// after a pause, and never when reduced motion is requested.
+const revealDuration = 700;
+const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 let lastGenerated = 0;
+let revealedCells = Infinity;
+let revealFrame = 0;
 function revealQr() {
   const now = performance.now();
   const paused = now - lastGenerated > 600;
   lastGenerated = now;
-  if (!paused) {
+  window.cancelAnimationFrame(revealFrame);
+  revealedCells = Infinity;
+  if (!paused || reducedMotion.matches) {
+    renderPreview();
     return;
   }
-  for (const element of [previewCanvas, readyDot]) {
-    element.classList.remove("is-revealing");
-    void element.offsetWidth;
-    element.classList.add("is-revealing");
-  }
+  readyDot.classList.remove("is-revealing");
+  void readyDot.offsetWidth;
+  readyDot.classList.add("is-revealing");
+  const total = qrMatrix.getModuleCount() ** 2;
+  const step = (time) => {
+    const progress = Math.min((time - now) / revealDuration, 1);
+    revealedCells = progress < 1 ? Math.floor(progress * total) : Infinity;
+    renderPreview();
+    if (progress < 1) {
+      revealFrame = window.requestAnimationFrame(step);
+    }
+  };
+  revealedCells = 0;
+  renderPreview();
+  revealFrame = window.requestAnimationFrame(step);
 }
 
 // Briefly swaps a button's icon for a check mark once its action succeeded.
@@ -213,7 +236,6 @@ function generateQr() {
     code.make();
     qrMatrix = code;
     qrKind = encoded.kind;
-    renderPreview();
     previewCanvas.hidden = false;
     emptyState.hidden = true;
     revealQr();
