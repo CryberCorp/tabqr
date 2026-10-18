@@ -326,8 +326,8 @@ ${content}
       .map((article) => `      <li>
         <a href="${article.slug}/">
           <span class="article-list-title">${escapeHtml(typeset(article.title, language))}</span>
-          <span class="article-list-description">${escapeHtml(typeset(article.description, language))}</span>
           <time datetime="${article.updated || article.date}">${r.dateText(article.updated || article.date, language)}</time>
+          <span class="article-list-description">${escapeHtml(typeset(article.description, language))}</span>
         </a>
       </li>`)
       .join("\n");
