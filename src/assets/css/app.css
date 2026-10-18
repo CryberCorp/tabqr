@@ -918,25 +918,39 @@ h1 {
     margin-top: 12px;
   }
 
-  /* Smartphone footer: one column, each item on its own line (tagline,
-     Chrome Web Store, More, language), every menu opening from the start
-     edge so it never leaves the screen. */
+  /* Smartphone footer: the tagline on top, set apart from the links, then one
+     link per row (Chrome Web Store, More, language). Every row has the same
+     height and touch area, so the column keeps one even rhythm; every menu
+     opens from the start edge so it never leaves the screen. */
   .site-footer {
     flex-direction: column;
     align-items: stretch;
-    gap: 4px;
-    padding: 14px 0 18px;
+    gap: 0;
+    padding: 20px 0 calc(16px + env(safe-area-inset-bottom));
   }
 
-  .footer-links {
-    justify-content: flex-start;
+  .footer-brand {
+    margin-bottom: 18px;
+    font-size: 12px;
   }
 
+  .footer-links,
   .footer-menus {
     flex-direction: column;
     align-items: flex-start;
-    gap: 4px;
+    gap: 0;
     margin-inline-start: 0;
+  }
+
+  .footer-links a,
+  .footer-menu summary {
+    min-height: 36px;
+    gap: 8px;
+    font-size: 12px;
+  }
+
+  .footer-menu {
+    font-size: 12px;
   }
 
   .footer-menu-panel,
@@ -944,13 +958,6 @@ h1 {
   .language-menu .footer-menu-panel {
     inset-inline-start: 0;
     inset-inline-end: auto;
-  }
-}
-
-@media (max-width: 360px) {
-  .footer-links {
-    flex-basis: 100%;
-    justify-content: space-between;
   }
 }
 
