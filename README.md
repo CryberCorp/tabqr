@@ -14,7 +14,8 @@ src/                          Sources du site : tout ce qui se modifie
     css/page.css              Styles des pages annexes (politiques), avec leur pied de page
     js/app.js                 Génération QR, contrôles, préférences, installation de l’app
     js/language.js            Choix de la langue (chargé dans <head>, avant l’affichage)
-    js/translations.js        Textes des 33 langues + règles typographiques
+    js/translations.js        Textes des 33 langues + règles typographiques (source : le site publie
+                              un petit fichier par langue, assets/js/i18n/<langue>.js)
     js/vendor/                Bibliothèque QR tierce, embarquée telle quelle
     fonts/  icons/  images/   Police, icônes de l’app installée, logos
   articles/                   Guides en Markdown : articles/<langue>/<adresse>.md (+ _template.md)
@@ -120,6 +121,13 @@ Le menu des langues du pied de page, les balises `hreflang` et le sitemap se met
 - Les étapes affichées sont dans `translations.js` (clés `install…`). Les libellés des menus des navigateurs y sont traduits au plus près ; à revoir si un navigateur les renomme.
 - Après la première visite, toutes les pages et ressources fonctionnent sans connexion. Chaque génération change la version du cache si un fichier a changé ; les visiteurs reçoivent la mise à jour à leur visite suivante.
 - Les icônes PNG de `src/assets/icons/` reprennent `src/assets/images/tabqr-icon.svg`. Si le logo change, les régénérer aux mêmes tailles (192, 512, 512 « maskable » avec marge, 180 pour iOS).
+
+## Performances et cache
+
+- GitHub Pages fixe la durée de cache des fichiers à 10 minutes, sans réglage possible. PageSpeed le signale (« durées de mise en cache efficaces », non noté) : c’est une limite de l’hébergement, pas du site.
+- Les visites suivantes ne dépendent pas de ce cache : les `?v=` changent dès qu’un fichier change, et le service worker sert les fichiers depuis l’appareil.
+- Chaque page ne charge que les traductions de sa langue (environ 5 Kio compressés au lieu de 42 pour les 33 langues).
+- Pour des durées de cache longues, il faudrait un hébergement qui permet de régler les en-têtes HTTP (par exemple Cloudflare Pages, gratuit).
 
 ## Publier sur GitHub Pages
 
