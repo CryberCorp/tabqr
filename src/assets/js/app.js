@@ -126,10 +126,7 @@ function savePreferences() {
   }
 }
 
-// For the reveal animation, the code is cut into a grid of equal tiles and
-// only the first "tiles" (left to right, then the next row) are shown.
-const revealGrid = 4;
-function drawQr(context, matrix, size, foreground, background, tiles = Infinity) {
+function drawQr(context, matrix, size, foreground, background) {
   const moduleCount = matrix.getModuleCount();
   const moduleSize = Math.floor(size / (moduleCount + 8));
   const qrSize = moduleCount * moduleSize;
@@ -150,30 +147,13 @@ function drawQr(context, matrix, size, foreground, background, tiles = Infinity)
       }
     }
   }
-
-  // Each tile fades in over the time the next two tiles take to start.
-  context.fillStyle = background;
-  const tileSize = Math.ceil(qrSize / revealGrid);
-  for (let tile = 0; tile < revealGrid ** 2; tile += 1) {
-    const shown = Math.min(Math.max((tiles - tile) / 2, 0), 1);
-    if (shown < 1) {
-      context.globalAlpha = 1 - shown;
-      context.fillRect(
-        offset + (tile % revealGrid) * tileSize,
-        offset + Math.floor(tile / revealGrid) * tileSize,
-        tileSize,
-        tileSize,
-      );
-    }
-  }
-  context.globalAlpha = 1;
 }
 
 function renderPreview() {
   if (!qrMatrix) {
     return;
   }
-  drawQr(previewContext, qrMatrix, previewCanvas.width, colorInput.value, backgroundInput.value, revealedTiles);
+  drawQr(previewContext, qrMatrix, previewCanvas.width, colorInput.value, backgroundInput.value);
 }
 
 function setError(message) {
@@ -184,29 +164,20 @@ function setError(message) {
   downloadButton.disabled = true;
 }
 
-// A new code fades in tile by tile, left to right and row by row, slowly at
-// first then faster and faster (exponential curve), and the LOCAL light
-// blinks once it is complete. Not while typing: only when the content
-// changed after a pause, and never when reduced motion is requested.
-const revealDuration = 560;
-const revealCurve = 3;
-const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-let lastGenerated = 0;
-let revealedTiles = Infinity;
-let revealFrame = 0;
-// The LOCAL light blinks when a code is ready, when a button is pressed, and
-// now and then on its own (every 6 to 14 seconds, only while the page is
-// visible), like a device at work.
-function blinkLight() {
-  readyDot.classList.remove("is-revealing");
-  void readyDot.offsetWidth;
-  readyDot.classList.add("is-revealing");
+function replayAnimation(element) {
+  element.classList.remove("is-revealing");
+  void element.offsetWidth;
+  element.classList.add("is-revealing");
 }
 
+// The LOCAL light blinks when a code is ready, when a button or an option
+// (colours, format) is used, and now and then on its own (every 6 to 14
+// seconds, only while the page is visible), like a device at work.
+const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 function blinkLater() {
   window.setTimeout(() => {
     if (!document.hidden && !reducedMotion.matches) {
-      blinkLight();
+      replayAnimation(readyDot);
     }
     blinkLater();
   }, 6000 + Math.random() * 8000);
@@ -215,35 +186,25 @@ blinkLater();
 
 document.addEventListener("pointerdown", (event) => {
   if (event.target.closest("button")) {
-    blinkLight();
+    replayAnimation(readyDot);
   }
 });
 
+for (const option of [colorInput, backgroundInput, formatInput]) {
+  option.addEventListener("change", () => replayAnimation(readyDot));
+}
+
+// A new code is drawn in a few steps, top to bottom. Not while typing: only
+// when the content changed after a pause.
+let lastGenerated = 0;
 function revealQr() {
   const now = performance.now();
   const paused = now - lastGenerated > 600;
   lastGenerated = now;
-  window.cancelAnimationFrame(revealFrame);
-  revealedTiles = Infinity;
-  if (!paused || reducedMotion.matches) {
-    renderPreview();
-    return;
+  if (paused) {
+    replayAnimation(previewCanvas);
+    replayAnimation(readyDot);
   }
-  const total = revealGrid ** 2;
-  const step = (time) => {
-    const progress = Math.min((time - now) / revealDuration, 1);
-    const eased = Math.expm1(revealCurve * progress) / Math.expm1(revealCurve);
-    revealedTiles = progress < 1 ? eased * (total + 2) : Infinity;
-    renderPreview();
-    if (progress < 1) {
-      revealFrame = window.requestAnimationFrame(step);
-    } else {
-      blinkLight();
-    }
-  };
-  revealedTiles = 0;
-  renderPreview();
-  revealFrame = window.requestAnimationFrame(step);
 }
 
 // Briefly swaps a button's icon for a check mark once its action succeeded.
@@ -278,6 +239,7 @@ function generateQr() {
     code.make();
     qrMatrix = code;
     qrKind = encoded.kind;
+    renderPreview();
     previewCanvas.hidden = false;
     emptyState.hidden = true;
     revealQr();
