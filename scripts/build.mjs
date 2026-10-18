@@ -9,6 +9,8 @@
 // - ?v= on local CSS/JS set from their content, so browsers never keep an
 //   outdated file;
 // - the offline file list and cache version in dist/sw.js;
+// - lighter published files: minified JS/CSS/HTML, Doto font subset as WOFF2
+//   (scripts/optimize.mjs);
 // - Markdown content (scripts/content.mjs): guides from src/articles/<language>/*.md
 //   and pages such as the privacy policy from src/pages/<language>/*.md;
 // - every other file of src/ is copied as is.
@@ -20,6 +22,7 @@ import { cpSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } f
 import { dirname, join, posix } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildArticles, buildPages, buildSitemapPages, readArticles, readPages } from "./content.mjs";
+import { minifyFile, optimize } from "./optimize.mjs";
 
 // Settings ------------------------------------------------------------------
 
@@ -48,6 +51,8 @@ const projectDir = join(dirname(fileURLToPath(import.meta.url)), "..");
 const srcDir = join(projectDir, "src");
 const distDir = join(projectDir, "dist");
 const read = (path) => readFileSync(join(srcDir, path), "utf8");
+// Published files, read after optimization (they are what visitors download).
+const readDist = (path) => readFileSync(join(distDir, path));
 const hash = (content) => createHash("sha256").update(content).digest("hex").slice(0, 10);
 const { translations, typeset } = new Function(
   `${read("assets/js/translations.js")}\nreturn { translations, typeset };`,
@@ -256,7 +261,7 @@ function offlineFiles(pages) {
   }
   for (const stylesheet of [...assets].filter((url) => url.split("?")[0].endsWith(".css"))) {
     const path = stylesheet.split("?")[0];
-    for (const [, url] of read(path).matchAll(/url\(["']?([^"')]+)["']?\)/g)) {
+    for (const [, url] of readDist(path).toString("utf8").matchAll(/url\(["']?([^"')]+)["']?\)/g)) {
       // Inline images (data:) and external URLs need no local file.
       if (!/^[a-z][a-z0-9+.-]*:/i.test(url)) {
         assets.add(posix.normalize(posix.join(posix.dirname(path), url)));
@@ -266,21 +271,19 @@ function offlineFiles(pages) {
   for (const icon of JSON.parse(read("manifest.webmanifest")).icons) {
     assets.add(icon.src);
   }
-  const bundleSources = new Map();
   for (const url of [...assets].filter((url) => url.startsWith("assets/js/translations.js"))) {
     assets.delete(url);
   }
-  for (const { path, source, version } of Object.values(bundles)) {
+  for (const { path, version } of Object.values(bundles)) {
     assets.add(`${path}?v=${version}`);
-    bundleSources.set(path, source);
   }
   const sortedAssets = [...assets].sort();
   const urls = [...pages.map(({ path }) => path || "./"), ...sortedAssets];
   const contents = [
-    ...pages.map(({ html }) => html),
-    ...sortedAssets.map((url) => bundleSources.get(url.split("?")[0]) ?? read(url.split("?")[0])),
+    ...pages.map(({ path }) => readDist(`${path}index.html`)),
+    ...sortedAssets.map((url) => readDist(url.split("?")[0])),
   ];
-  return { urls, version: hash(contents.join("\n")) };
+  return { urls, version: hash(Buffer.concat(contents)) };
 }
 
 // Fresh dist/: static files copied as is, then the generated ones.
@@ -342,6 +345,9 @@ const markdownPages = buildPages({ ...contentOptions, pages: contentPages, write
 buildSitemapPages({ ...contentOptions, articles, pages: contentPages, siteLanguages: languages, write: guides.write });
 writeFileSync(join(distDir, "sitemap.xml"), sitemap([...markdownPages.sitemapEntries, ...guides.sitemapEntries]));
 
+const savings = await optimize(distDir, {
+  font: { ttf: "assets/fonts/Doto-Black.ttf", woff2: "assets/fonts/Doto-Black.woff2" },
+});
 const { urls, version } = offlineFiles(pages);
 writeFileSync(join(distDir, "sw.js"), replaceBlock(read("sw.js"), "// build:precache", "// /build:precache", [
   `const VERSION = "${version}";`,
@@ -349,5 +355,8 @@ writeFileSync(join(distDir, "sw.js"), replaceBlock(read("sw.js"), "// build:prec
   ...urls.map((url) => `  "${url}",`),
   "];",
 ]));
+await minifyFile(join(distDir, "sw.js"));
 
+const kib = (bytes) => `${(bytes / 1024).toFixed(0)} KiB`;
+console.log(`Optimized: JS/CSS/HTML ${kib(savings.before)} → ${kib(savings.after)}, font ${kib(savings.fontBefore)} → ${kib(savings.fontAfter)}.`);
 console.log(`Built ${pages.length} language pages, ${contentPages.length} content pages, ${articles.length} articles in ${guides.languages.length} languages, sitemap.xml and sw.js (${urls.length} offline files, version ${version}).`);
