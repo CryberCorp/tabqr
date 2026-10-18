@@ -470,10 +470,18 @@ h1 {
   letter-spacing: 0.06em;
 }
 
+/* As tall as the capital letters next to it. */
 .ready-badge .privacy-dot {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   margin: 0;
+}
+
+/* Trim the text box to the capital letters so the light is centred on them,
+   not on the line height. */
+.ready-badge > span:last-child {
+  line-height: 1;
+  text-box: trim-both cap alphabetic;
 }
 
 .qr-card {
@@ -974,17 +982,6 @@ h1 {
 .secondary-button:active,
 .primary-button:active:not(:disabled) {
   transform: translate(1px, 1px);
-}
-
-/* Once fully drawn, a new QR code settles with a small bump. */
-@keyframes qr-settle {
-  40% {
-    transform: scale(1.04);
-  }
-}
-
-#qr-preview.is-revealing {
-  animation: qr-settle 220ms cubic-bezier(0.2, 0.8, 0.3, 1);
 }
 
 /* The LOCAL light blinks twice when a new code is ready. */

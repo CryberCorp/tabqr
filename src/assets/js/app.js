@@ -151,16 +151,22 @@ function drawQr(context, matrix, size, foreground, background, tiles = Infinity)
     }
   }
 
+  // Each tile fades in over the time the next two tiles take to start.
   context.fillStyle = background;
   const tileSize = Math.ceil(qrSize / revealGrid);
-  for (let tile = Math.max(tiles, 0); tile < revealGrid ** 2; tile += 1) {
-    context.fillRect(
-      offset + (tile % revealGrid) * tileSize,
-      offset + Math.floor(tile / revealGrid) * tileSize,
-      tileSize,
-      tileSize,
-    );
+  for (let tile = 0; tile < revealGrid ** 2; tile += 1) {
+    const shown = Math.min(Math.max((tiles - tile) / 2, 0), 1);
+    if (shown < 1) {
+      context.globalAlpha = 1 - shown;
+      context.fillRect(
+        offset + (tile % revealGrid) * tileSize,
+        offset + Math.floor(tile / revealGrid) * tileSize,
+        tileSize,
+        tileSize,
+      );
+    }
   }
+  context.globalAlpha = 1;
 }
 
 function renderPreview() {
@@ -178,22 +184,40 @@ function setError(message) {
   downloadButton.disabled = true;
 }
 
-// A new code appears tile by tile, left to right and row by row, slowly at
-// first then faster and faster (exponential curve). Once complete, the code
-// settles with a small bump and the LOCAL light blinks. Not while typing:
-// only when the content changed after a pause, and never when reduced motion
-// is requested.
-const revealDuration = 520;
+// A new code fades in tile by tile, left to right and row by row, slowly at
+// first then faster and faster (exponential curve), and the LOCAL light
+// blinks once it is complete. Not while typing: only when the content
+// changed after a pause, and never when reduced motion is requested.
+const revealDuration = 560;
 const revealCurve = 3;
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 let lastGenerated = 0;
 let revealedTiles = Infinity;
 let revealFrame = 0;
-function replayAnimation(element) {
-  element.classList.remove("is-revealing");
-  void element.offsetWidth;
-  element.classList.add("is-revealing");
+// The LOCAL light blinks when a code is ready, when a button is pressed, and
+// now and then on its own (every 6 to 14 seconds, only while the page is
+// visible), like a device at work.
+function blinkLight() {
+  readyDot.classList.remove("is-revealing");
+  void readyDot.offsetWidth;
+  readyDot.classList.add("is-revealing");
 }
+
+function blinkLater() {
+  window.setTimeout(() => {
+    if (!document.hidden && !reducedMotion.matches) {
+      blinkLight();
+    }
+    blinkLater();
+  }, 6000 + Math.random() * 8000);
+}
+blinkLater();
+
+document.addEventListener("pointerdown", (event) => {
+  if (event.target.closest("button")) {
+    blinkLight();
+  }
+});
 
 function revealQr() {
   const now = performance.now();
@@ -209,16 +233,15 @@ function revealQr() {
   const step = (time) => {
     const progress = Math.min((time - now) / revealDuration, 1);
     const eased = Math.expm1(revealCurve * progress) / Math.expm1(revealCurve);
-    revealedTiles = progress < 1 ? Math.floor(eased * total) + 1 : Infinity;
+    revealedTiles = progress < 1 ? eased * (total + 2) : Infinity;
     renderPreview();
     if (progress < 1) {
       revealFrame = window.requestAnimationFrame(step);
     } else {
-      replayAnimation(previewCanvas);
-      replayAnimation(readyDot);
+      blinkLight();
     }
   };
-  revealedTiles = 1;
+  revealedTiles = 0;
   renderPreview();
   revealFrame = window.requestAnimationFrame(step);
 }
