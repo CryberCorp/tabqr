@@ -196,7 +196,7 @@ for (const option of [colorInput, backgroundInput, formatInput]) {
 
 // A new code is drawn in a few steps, top to bottom. Not while typing: only
 // when the content changed after a pause.
-let lastGenerated = 0;
+let lastGenerated = -Infinity;
 function revealQr() {
   const now = performance.now();
   const paused = now - lastGenerated > 600;
