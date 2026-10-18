@@ -2,7 +2,7 @@
 title: Quelle taille pour imprimer un QR code ?
 description: Les règles de taille, de distance et de marge qui gardent un QR code imprimé facile à scanner, avec un tableau de référence.
 date: 2026-10-18
-translationKey: qr-code-print-size
+slug: taille-impression-qr-code
 ---
 
 Un QR code trop petit, trop dense ou imprimé sans marge est la première cause d’échec au scan. Bonne nouvelle : trois règles simples couvrent presque tous les cas.

@@ -2,8 +2,8 @@
 title: Privacy Policy
 description: Privacy policy for TabQR, a Chrome extension for generating QR codes.
 path: privacy-policy/
+redirectFrom: privacy-policy/en/
 updated: 2026-10-16
-translationKey: privacy-policy
 note: This policy applies to the TabQR Chrome extension. This page is hosted by GitHub Pages; see [GitHub’s privacy statement](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement) for information about data processed when visiting the site.
 ---
 

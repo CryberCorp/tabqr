@@ -1,8 +1,8 @@
 ---
 title: Politique de confidentialité
 description: Politique de confidentialité de TabQR, extension Chrome de génération de codes QR.
+redirectFrom: privacy-policy/fr/
 updated: 2026-10-16
-translationKey: privacy-policy
 note: Cette politique s’applique à l’extension Chrome TabQR. Cette page est hébergée par GitHub Pages ; consultez la [politique de confidentialité de GitHub](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement) pour en savoir plus sur les données traitées lors de la visite du site.
 ---
 

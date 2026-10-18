@@ -2,7 +2,6 @@
 title: How big should a printed QR code be?
 description: The size, distance and margin rules that keep a printed QR code easy to scan, with a quick reference table.
 date: 2026-10-18
-translationKey: qr-code-print-size
 ---
 
 A QR code that is too small, too dense or printed without margins is the most common reason a scan fails. The good news: three simple rules cover almost every case.

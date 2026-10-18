@@ -18,9 +18,8 @@ src/                          Sources du site : tout ce qui se modifie
                               un petit fichier par langue, assets/js/i18n/<langue>.js)
     js/vendor/                Bibliothèque QR tierce, embarquée telle quelle
     fonts/  icons/  images/   Police, icônes de l’app installée, logos
-  articles/                   Guides en Markdown : articles/<langue>/<adresse>.md (+ _template.md)
-  pages/                      Pages en Markdown (politique de confidentialité…) : pages/<langue>/<nom>.md (+ _template.md)
-  privacy-policy/en/, fr/     Anciennes adresses de la politique, conservées comme redirections
+  articles/                   Guides en Markdown : articles/<nom>/<langue>.md (+ _template.md)
+  pages/                      Pages en Markdown (politique de confidentialité…) : pages/<nom>/<langue>.md (+ _template.md)
   manifest.webmanifest        Description de l’application installable (PWA)
   sw.js                       Service worker (hors ligne) ; sa liste de fichiers est générée
   google96bb0ab2759d810e.html Vérification Google Search Console : ne pas supprimer ni renommer
@@ -67,24 +66,25 @@ npm run serve    # sert le dernier dist/ généré
 
 ### Ajouter un guide (article)
 
-1. Copier `src/articles/_template.md` dans `src/articles/<langue>/` (`en`, `fr`, `de`…). Le nom du fichier devient l’adresse : `src/articles/fr/mon-guide.md` → `/fr/articles/mon-guide/` (minuscules, mots séparés par des tirets).
-2. Remplir l’en-tête :
+1. Créer un dossier dans `src/articles/` au nom du guide, par exemple `src/articles/qr-code-colors/` (minuscules, mots séparés par des tirets). Ce nom est l’adresse : `/articles/qr-code-colors/`.
+2. Y copier `src/articles/_template.md` une fois par langue, sous le nom de la langue : `en.md`, `fr.md`, `de.md`… Les fichiers d’un même dossier sont les traductions du même guide (boutons de langue, `hreflang`).
+3. Remplir l’en-tête :
    - `title` et `description` (environ 150 caractères, affichée dans Google et dans la liste des guides) ;
    - `date` (et plus tard `updated`) au format `AAAA-MM-JJ` ;
-   - `translationKey` : la même clé pour toutes les traductions d’un même guide, qui sont alors reliées entre elles (boutons de langue, `hreflang`) ;
+   - `slug` pour donner une adresse traduite à une langue : `slug: couleurs-qr-code` → `/fr/articles/couleurs-qr-code/` ;
    - `draft: true` tant que le guide n’est pas prêt (il n’est pas publié).
-3. Écrire en Markdown : titres `##` et `###`, listes, **gras**, liens, tableaux, citations `>`, images. Les liens et images qui commencent par `/` partent de la racine du site : `[le générateur](/fr/)`, `![Texte](/assets/images/articles/photo.png)` (images dans `src/assets/images/articles/`).
+   Écrire en Markdown : titres `##` et `###`, listes, **gras**, liens, tableaux, citations `>`, images. Les liens et images qui commencent par `/` partent de la racine du site : `[le générateur](/fr/)`, `![Texte](/assets/images/articles/photo.png)` (images dans `src/assets/images/articles/`).
 4. `npm run dev` et vérifier `/articles/` ou `/fr/articles/`, puis commit et push.
 
 Tout le reste est automatique : page du guide (fil d’Ariane, date, temps de lecture, données structurées `Article`), liste des guides de la langue, sitemap, et lien **Guides** du menu « Plus » (vers les guides de la langue de la page, sinon vers les guides anglais). Les textes de l’interface des guides sont dans `translations.js` (clés `guides…`, `readingTime`, `createQr`…), déjà traduits dans les 33 langues.
 
 ### Ajouter ou modifier une page (politique, mentions légales…)
 
-Même principe que les guides, dans `src/pages/<langue>/` (modèle : `src/pages/_template.md`) :
+Même principe que les guides : un dossier par page dans `src/pages/`, un fichier par langue dedans (modèle : `src/pages/_template.md`) :
 
-- `title` et `description` ; `updated` (affichée « Dernière mise à jour ») ; `note` (petit texte en bas de page, liens Markdown acceptés) ; `translationKey` pour relier les traductions ; `draft: true` pour ne pas publier.
-- Adresse par défaut : `/<langue>/<nom>/` (`/<nom>/` en anglais). Pour garder une adresse précise, ajouter `path` : c’est le cas de la politique anglaise (`path: privacy-policy/`), dont l’adresse est enregistrée dans le Chrome Web Store. La version française suit l’adresse par défaut : `/fr/privacy-policy/`.
-- Pour modifier la politique de confidentialité : éditer `src/pages/en/privacy-policy.md` et `src/pages/fr/privacy-policy.md`, et mettre à jour `updated` dans les deux.
+- `title` et `description` ; `updated` (affichée « Dernière mise à jour ») ; `note` (petit texte en bas de page, liens Markdown acceptés) ; `slug` pour une adresse traduite ; `redirectFrom` pour rediriger d’anciennes adresses vers la page (séparées par des virgules) ; `draft: true` pour ne pas publier.
+- Adresse par défaut : `/<langue>/<nom du dossier>/` (`/<nom du dossier>/` en anglais). Pour garder une adresse précise, ajouter `path` : c’est le cas de la politique anglaise (`path: privacy-policy/`), dont l’adresse est enregistrée dans le Chrome Web Store. La version française suit l’adresse par défaut : `/fr/privacy-policy/`.
+- Pour modifier la politique de confidentialité : éditer `src/pages/privacy-policy/en.md` et `src/pages/privacy-policy/fr.md`, et mettre à jour `updated` dans les deux.
 
 Deux fichiers qui produiraient la même adresse arrêtent la génération avec un message clair.
 
@@ -152,7 +152,7 @@ Adresses publiées :
 - Sitemap : <https://crybercorp.github.io/tabqr/sitemap.xml>
 - Politique de confidentialité : <https://crybercorp.github.io/tabqr/privacy-policy/> (anglais) et <https://crybercorp.github.io/tabqr/fr/privacy-policy/> (français)
 
-L’URL anglaise de la politique est enregistrée dans le Chrome Web Store. **Ne pas modifier le champ `path` de `src/pages/en/privacy-policy.md`** avant d’avoir mis à jour cette URL dans la fiche de l’extension.
+L’URL anglaise de la politique est enregistrée dans le Chrome Web Store. **Ne pas modifier le champ `path` de `src/pages/privacy-policy/en.md`** avant d’avoir mis à jour cette URL dans la fiche de l’extension.
 
 ## Fiche Chrome Web Store
 

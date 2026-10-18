@@ -2,26 +2,34 @@
 // (src/assets/css/page.css): logo back to the generator, language buttons
 // between translations, readable text, footer.
 //
-// Guides: src/articles/<language>/<slug>.md
+// One folder per text, one file per language inside it:
+//   src/articles/qr-code-print-size/en.md, …/fr.md
+//   src/pages/privacy-policy/en.md, …/fr.md
+// The files of one folder are the translations of one text (language buttons,
+// hreflang). The folder name is the default address; "slug" gives a language
+// its own address (e.g. "slug: taille-impression-qr-code").
+//
+// Guides (src/articles/<name>/<language>.md)
 //   → <language path>articles/<slug>/  (dist/articles/… in English,
 //     dist/fr/articles/… in French), plus one "Guides" index per language.
 //   Front matter: title, description, date (YYYY-MM-DD), and optionally
-//   updated, translationKey, draft.
+//   slug, updated, draft.
 //
-// Pages: src/pages/<language>/<slug>.md (privacy policy…)
-//   → <language path><slug>/, or the address given in "path".
-//   Front matter: title, description, and optionally path (to keep an existing
-//   address, e.g. "privacy-policy/"), updated (shown as "Last updated"),
-//   note (small text at the bottom, Markdown links allowed), translationKey, draft.
+// Pages (src/pages/<name>/<language>.md: privacy policy…)
+//   → <language path><slug>/, or the full address given in "path".
+//   Front matter: title, description, and optionally slug, path (to keep an
+//   existing address, e.g. "privacy-policy/"), updated (shown as "Last
+//   updated"), note (small text at the bottom, Markdown links allowed),
+//   redirectFrom (old addresses that forward here, comma-separated), draft.
 //
 // Every file starts with:
 //   ---
 //   title: …
 //   description: …
 //   ---
-// Files starting with "_" are templates and never published. Translations of
-// one text share the same translationKey. In the Markdown, links and images
-// starting with "/" point to the site root: "/fr/" is the French generator.
+// Files and folders starting with "_" are templates and never published. In
+// the Markdown, links and images starting with "/" point to the site root:
+// "/fr/" is the French generator.
 
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -81,23 +89,35 @@ function parseFrontMatter(source, file, required) {
   return { data, body: source.slice(match[0].length) };
 }
 
-// Reads src/<folder>/<language>/*.md; loose files and "_" files are ignored.
+// Reads src/<folder>/<name>/<language>.md. Loose files and anything starting
+// with "_" (templates) are ignored.
+const languageFile = /^([a-z]{2,3}(?:-[A-Z]{2})?)\.md$/;
+const addressPart = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 function readContent(srcDir, folder, required) {
   const root = join(srcDir, folder);
   if (!existsSync(root)) {
     return [];
   }
   const entries = [];
-  const languages = readdirSync(root, { withFileTypes: true }).filter((entry) => entry.isDirectory());
-  for (const { name: language } of languages) {
-    for (const file of readdirSync(join(root, language)).filter((name) => name.endsWith(".md") && !name.startsWith("_"))) {
-      const path = `src/${folder}/${language}/${file}`;
-      const { data, body } = parseFrontMatter(readFileSync(join(root, language, file), "utf8"), path, required);
+  const texts = readdirSync(root, { withFileTypes: true }).filter((entry) => entry.isDirectory() && !entry.name.startsWith("_"));
+  for (const { name: key } of texts) {
+    if (!addressPart.test(key)) {
+      throw new Error(`src/${folder}/${key}/: folder names are addresses: lowercase letters, digits and "-" only.`);
+    }
+    for (const file of readdirSync(join(root, key)).filter((name) => name.endsWith(".md") && !name.startsWith("_"))) {
+      const path = `src/${folder}/${key}/${file}`;
+      const language = file.match(languageFile)?.[1];
+      if (!language) {
+        throw new Error(`${path}: name the file after its language, e.g. en.md, fr.md, pt-BR.md.`);
+      }
+      const { data, body } = parseFrontMatter(readFileSync(join(root, key, file), "utf8"), path, required);
       if (data.draft === "true") {
         continue;
       }
-      const slug = file.replace(/\.md$/, "");
-      entries.push({ language, slug, key: data.translationKey || slug, source: path, ...data, body });
+      if (data.slug && !addressPart.test(data.slug)) {
+        throw new Error(`${path}: "slug" must use lowercase letters, digits and "-" only.`);
+      }
+      entries.push({ ...data, language, key, slug: data.slug || key, source: path, body });
     }
   }
   return entries;
@@ -411,6 +431,27 @@ ${content}
     </article>${note}`,
     }), entry.source);
     sitemapEntries.push({ loc: `${siteUrl}${path}`, alternates: r.withXDefault(alternates), lastmod: entry.updated });
+
+    // Old addresses ("redirectFrom: a/, b/") forward to this page; search
+    // engines are told not to index them and to follow the canonical one.
+    for (const oldPath of (entry.redirectFrom ?? "").split(",").map((item) => item.trim().replace(/^\/+|\/+$/g, "")).filter(Boolean)) {
+      const target = `${siteUrl}${path}`;
+      write(`${oldPath}/`, `<!doctype html>
+<html lang="${language}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,follow">
+  <meta http-equiv="refresh" content="0; url=${target}">
+  <link rel="canonical" href="${target}">
+  <title>${escapeHtml(entry.title)} — TabQR</title>
+</head>
+<body>
+  <p><a href="${target}">${escapeHtml(entry.title)}</a></p>
+</body>
+</html>
+`, `${entry.source} (redirectFrom)`);
+    }
   }
   return { sitemapEntries };
 }
