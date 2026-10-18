@@ -178,14 +178,23 @@ function setError(message) {
   downloadButton.disabled = true;
 }
 
-// A new code appears tile by tile, left to right and row by row, and the
-// LOCAL light blinks. Not while typing: only when the content changed
-// after a pause, and never when reduced motion is requested.
-const revealDuration = 400;
+// A new code appears tile by tile, left to right and row by row, slowly at
+// first then faster and faster (exponential curve). Once complete, the code
+// settles with a small bump and the LOCAL light blinks. Not while typing:
+// only when the content changed after a pause, and never when reduced motion
+// is requested.
+const revealDuration = 520;
+const revealCurve = 3;
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 let lastGenerated = 0;
 let revealedTiles = Infinity;
 let revealFrame = 0;
+function replayAnimation(element) {
+  element.classList.remove("is-revealing");
+  void element.offsetWidth;
+  element.classList.add("is-revealing");
+}
+
 function revealQr() {
   const now = performance.now();
   const paused = now - lastGenerated > 600;
@@ -196,16 +205,17 @@ function revealQr() {
     renderPreview();
     return;
   }
-  readyDot.classList.remove("is-revealing");
-  void readyDot.offsetWidth;
-  readyDot.classList.add("is-revealing");
   const total = revealGrid ** 2;
   const step = (time) => {
     const progress = Math.min((time - now) / revealDuration, 1);
-    revealedTiles = progress < 1 ? Math.floor(progress * total) + 1 : Infinity;
+    const eased = Math.expm1(revealCurve * progress) / Math.expm1(revealCurve);
+    revealedTiles = progress < 1 ? Math.floor(eased * total) + 1 : Infinity;
     renderPreview();
     if (progress < 1) {
       revealFrame = window.requestAnimationFrame(step);
+    } else {
+      replayAnimation(previewCanvas);
+      replayAnimation(readyDot);
     }
   };
   revealedTiles = 1;

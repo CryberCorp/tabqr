@@ -976,6 +976,17 @@ h1 {
   transform: translate(1px, 1px);
 }
 
+/* Once fully drawn, a new QR code settles with a small bump. */
+@keyframes qr-settle {
+  40% {
+    transform: scale(1.04);
+  }
+}
+
+#qr-preview.is-revealing {
+  animation: qr-settle 220ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
 /* The LOCAL light blinks twice when a new code is ready. */
 @keyframes light-blink {
   50% {
