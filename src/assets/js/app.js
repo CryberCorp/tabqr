@@ -181,7 +181,7 @@ function setError(message) {
 // A new code appears tile by tile, left to right and row by row, and the
 // LOCAL light blinks. Not while typing: only when the content changed
 // after a pause, and never when reduced motion is requested.
-const revealDuration = 640;
+const revealDuration = 400;
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 let lastGenerated = 0;
 let revealedTiles = Infinity;
