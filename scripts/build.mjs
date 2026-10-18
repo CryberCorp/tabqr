@@ -273,11 +273,15 @@ function offlineFiles(pages, inlined = []) {
   for (const icon of JSON.parse(read("manifest.webmanifest")).icons) {
     assets.add(icon.src);
   }
-  for (const url of [...assets].filter((url) => url.startsWith("assets/js/translations.js") || inlined.includes(url.split("?")[0]))) {
+  const manifestIcons = JSON.parse(read("manifest.webmanifest")).icons.map(({ src }) => src);
+  for (const url of [...assets].filter((url) => url.startsWith("assets/js/translations.js")
+    || (inlined.includes(url.split("?")[0]) && !manifestIcons.includes(url.split("?")[0])))) {
     assets.delete(url);
   }
   for (const { path, version } of Object.values(bundles)) {
-    assets.add(`${path}?v=${version}`);
+    if (!inlined.includes(path)) {
+      assets.add(`${path}?v=${version}`);
+    }
   }
   const sortedAssets = [...assets].sort();
   const urls = [...pages.map(({ path }) => path || "./"), ...sortedAssets];

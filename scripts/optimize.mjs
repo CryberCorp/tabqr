@@ -131,12 +131,58 @@ export async function optimize(distDir, { font }) {
       inlined.add(asset);
       return `<script>${js}</script>`;
     });
+
+    // Deferred scripts: inlined at the end of <body>, in the same order. They
+    // then run once the document is parsed, exactly like "defer".
+    const deferred = [];
+    html = html.replace(/[ \t]*<script src="([^"]+)" defer><\/script>\n?/g, (match, src) => {
+      if (!isLocalUrl(src)) {
+        return match;
+      }
+      const asset = local(src);
+      const js = readFileSync(join(distDir, asset), "utf8");
+      if (/<\/script/i.test(js)) {
+        throw new Error(`${asset}: cannot be inlined safely (closing tag).`);
+      }
+      inlined.add(asset);
+      deferred.push(`<script>${js}</script>`);
+      return "";
+    });
+    if (deferred.length) {
+      html = html.replace("</body>", `${deferred.join("\n")}\n</body>`);
+    }
+
+    // Small SVG images (logo, store icon) and the SVG favicon as data URLs.
+    html = html.replace(/(<img\b[^>]*\ssrc="|<link rel="icon" href=")([^"]+\.svg)"/g, (match, start, src) => {
+      if (!isLocalUrl(src)) {
+        return match;
+      }
+      const asset = local(src);
+      const svg = readFileSync(join(distDir, asset), "utf8").trim().replace(/\s*\n\s*/g, "");
+      inlined.add(asset);
+      const data = encodeURIComponent(svg).replace(/%20/g, " ").replace(/%2F/g, "/").replace(/%3A/g, ":").replace(/%3D/g, "=");
+      return `${start}data:image/svg+xml,${data}"`;
+    });
     writeFileSync(path, html);
   }
 
-  // Inlined files are no longer requested by any page: not published.
+  // Inlined files are no longer requested by any page: not published, except
+  // the app icons the web app manifest still points to.
+  const manifestIcons = new Set(JSON.parse(readFileSync(join(distDir, "manifest.webmanifest"), "utf8")).icons.map(({ src }) => src));
   for (const asset of inlined) {
-    rmSync(join(distDir, asset), { force: true });
+    if (!manifestIcons.has(asset)) {
+      rmSync(join(distDir, asset), { force: true });
+    }
+  }
+  // Folders left empty (css/, fonts/, js/…) are removed, deepest first.
+  const folders = readdirSync(distDir, { recursive: true, withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => join(entry.parentPath, entry.name))
+    .sort((a, b) => b.length - a.length);
+  for (const folder of folders) {
+    if (!readdirSync(folder).length) {
+      rmSync(folder, { recursive: true });
+    }
   }
 
   return { before, after, fontBefore: ttfSize, fontAfter: woff2.length, inlined: [...inlined] };
