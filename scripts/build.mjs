@@ -21,6 +21,7 @@ import { createHash } from "node:crypto";
 import { cpSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, posix } from "node:path";
 import { fileURLToPath } from "node:url";
+import { googleAnalyticsTags } from "./analytics.mjs";
 import { buildArticles, buildPages, buildSitemapPages, readArticles, readPages } from "./content.mjs";
 import { minifyFile, optimize } from "./optimize.mjs";
 
@@ -151,6 +152,7 @@ function headTags(language, messages) {
     `<meta property="og:locale" content="${ogLocales[language] ?? language.replace("-", "_")}">`,
     '<meta name="twitter:card" content="summary">',
     `<script type="application/ld+json">${JSON.stringify(structuredData).replace(/</g, "\\u003c")}</script>`,
+    ...googleAnalyticsTags,
   ];
 }
 

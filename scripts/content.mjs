@@ -34,6 +34,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { Marked } from "marked";
+import { googleAnalyticsTags } from "./analytics.mjs";
 
 const marked = new Marked({ gfm: true });
 
@@ -207,6 +208,7 @@ ${alternates.map(([hreflang, url]) => `  <link rel="alternate" hreflang="${hrefl
   <link rel="icon" href="${root}assets/images/tabqr-icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="${root}${stylesheet}">
   <script type="application/ld+json">${JSON.stringify(structuredData).replace(/</g, "\\u003c")}</script>
+${googleAnalyticsTags.map((tag) => `  ${tag}`).join("\n")}
 </head>
 <body>
   <main class="${mainClass}">
